@@ -1,0 +1,17 @@
+dataDir: /nfs/home/ansintsova/esbl_strains/raw
+outDir: /nfs/home/ansintsova/esbl_strains
+sampleFile: /nfs/home/ansintsova/esbl_strains/samples.txt
+
+#Preprocessing
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+
+merged: false
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+
