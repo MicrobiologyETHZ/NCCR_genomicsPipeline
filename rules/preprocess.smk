@@ -1,83 +1,55 @@
 from pathlib import Path
-import sys
-DATADIR = Path(config['dataDir'])
-OUTDIR = Path(config['outDir'])
+
 ADAPTERS = Path(config['adapters'])
 PHIX = Path(config['phix'])
-SFILE = Path(config['sampleFile'])
-
-def get_subsamples(sample_file=SFILE):
-    subsamples = []
-    if Path(sample_file).is_file():
-        subsamples = set(Path(sample_file).read_text().splitlines())
-    if len(subsamples) == 0:
-        exit(1)
-    return subsamples
-
-def get_samples(subsamples, suffix = '.fq.gz'):
-    samples = []
-
-    for s in subsamples:
-        pattern = f'{s}*{suffix}'
-        sample_path = list(DATADIR.joinpath(s).rglob(pattern))
-        if len(sample_path)<1:
-            sys.exit(1)
-        else:
-            sample = str(sample_path[0].name).split('.')[0]
-            samples.append(sample)
-    return samples
 
 
-# def getFastqPair(wildcards):
-#     fq1 = Path(DATADIR).joinpath(wildcards.sample).rglob('*.1.fq.gz')
-#     fq2 = Path(DATADIR).joinpath(wildcards.sample).rglob('*.2.fq.gz')
-#     return fq1, fq2
+def getFastq1(wildcards):
+    return str(list(Path(DATADIR).joinpath(wildcards.sample).rglob('*.1.fq.gz'))[0])
+
+def getFastq2(wildcards):
+    return str(list(Path(DATADIR).joinpath(wildcards.sample).rglob('*.2.fq.gz'))[0])
 
 
-SUBSAMPLES = get_subsamples()
-SAMPLES = get_samples(SUBSAMPLES)
+def return_sample(wildcards):
+    return str(Path(OUTDIR/f'{wildcards.subsample}/{wildcards.sample}').parent.stem)
 
-# todo change PE rules
-rule qc_samples:
-    input: [OUTDIR/f'merged_reads/{sub}/{sam}.merge.done' for sub, sam in zip(SUBSAMPLES, SAMPLES)]
 
 
 rule qc:
     input:
-        fq1 = DATADIR/'{subsample}/{sample}.1.fq.gz',
-        fq2 = DATADIR/'{subsample}/{sample}.2.fq.gz',
+        fq1 = getFastq1,
+        fq2 = getFastq2,
         adapters = ADAPTERS,
         phix = PHIX
     output:
-        fq1_clean = OUTDIR /'clean_reads/{subsample}/{sample}.1.fq.gz',
-        fq2_clean = OUTDIR /'clean_reads/{subsample}/{sample}.2.fq.gz',
-        adapter_matched = OUTDIR /'clean_reads/{subsample}/removedreads/{sample}.adapter.matched.fq.gz',
-        adapter_singletons = OUTDIR /'clean_reads/{subsample}/removedreads/{sample}.adapter.singletons.fq.gz',
-        adapter_stats = OUTDIR /'clean_reads/{subsample}/{sample}.adapter.stats',
-        phix_matched = OUTDIR /'clean_reads/{subsample}/removedreads/{sample}.phix.matched.fq.gz',
-        phix_singletons = OUTDIR /'clean_reads/{subsample}/removedreads/{sample}.phix.singletons.fq.gz',
-        phix_stats = OUTDIR /'clean_reads/{subsample}/{sample}.phix.stats',
-        qc_failed = OUTDIR /'clean_reads/{subsample}/removedreads/{sample}.qc.failed.fq.gz',
-        qc_singletons = OUTDIR /'clean_reads/{subsample}/{sample}.s.fq.gz',
-        qc_stats = OUTDIR /'clean_reads/{subsample}/{sample}.qc.stats',
-        marker = touch(OUTDIR /'clean_reads/{subsample}/{sample}.qc.done')
+        fq1_clean = OUTDIR /'clean_reads/{sample}/{sample}.1.fq.gz',
+        fq2_clean = OUTDIR /'clean_reads/{sample}/{sample}.2.fq.gz',
+        adapter_matched = OUTDIR /'clean_reads/{sample}/removedreads/{sample}.adapter.matched.fq.gz',
+        adapter_singletons = OUTDIR /'clean_reads/{sample}/removedreads/{sample}.adapter.singletons.fq.gz',
+        adapter_stats = OUTDIR /'clean_reads/{sample}/{sample}.adapter.stats',
+        phix_matched = OUTDIR /'clean_reads/{sample}/removedreads/{sample}.phix.matched.fq.gz',
+        phix_singletons = OUTDIR /'clean_reads/{sample}/removedreads/{sample}.phix.singletons.fq.gz',
+        phix_stats = OUTDIR /'clean_reads/{sample}/{sample}.phix.stats',
+        qc_failed = OUTDIR /'clean_reads/{sample}/removedreads/{sample}.qc.failed.fq.gz',
+        qc_singletons = OUTDIR /'clean_reads/{sample}/{sample}.s.fq.gz',
+        qc_stats = OUTDIR /'clean_reads/{sample}/{sample}.qc.stats',
+        marker = touch(OUTDIR /'clean_reads/{sample}/{sample}.qc.done')
     params:
         trimq=config['trimq'],
         maq=config['mapq'],
         minlen=config['minlen'],
-        qoutfile = OUTDIR /'clean_reads/{subsample}/{sample}.qc.qout',
-        qerrfile = OUTDIR /'clean_reads/{subsample}/{sample}.qc.qerr',
+        qoutfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.qc.qout',
+        qerrfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.qc.qerr',
         scratch = 500,
         mem = 8000,
         time = 235
-
     conda:
         "envs/qc.yaml"
     benchmark:
-        OUTDIR /'clean_reads/{subsample}/{sample}.qc.benchmark'
+        OUTDIR /'clean_reads/{sample}/{sample}.qc.benchmark'
     log:
-        logfile = OUTDIR /'clean_reads/{subsample}/{sample}.qc.log',
-        command = OUTDIR /'clean_reads/{subsample}/{sample}.qc.command'
+        logfile = OUTDIR /'logs/qc/{sample}.qc.log',
     threads:
         8
     shell:
@@ -105,33 +77,32 @@ rule qc:
 
 
 
-rule merge:
+rule merge_all:
     input:
-        fqz1 = OUTDIR /'clean_reads/{subsample}/{sample}.1.fq.gz',
-        fqz2 = OUTDIR /'clean_reads/{subsample}/{sample}.2.fq.gz',
-        fqzs = OUTDIR /'clean_reads/{subsample}/{sample}.s.fq.gz',
-        marker = OUTDIR /'clean_reads/{subsample}/{sample}.qc.done'
+        fqz1 = OUTDIR /'clean_reads/{sample}/{sample}.1.fq.gz',
+        fqz2 = OUTDIR /'clean_reads/{sample}/{sample}.2.fq.gz',
+        fqzs = OUTDIR /'clean_reads/{sample}/{sample}.s.fq.gz',
+        marker = OUTDIR /'clean_reads/{sample}/{sample}.qc.done'
     output:
-        fqz1 = OUTDIR /'merged_reads/{subsample}/{sample}.1.fq.gz',
-        fqz2 = OUTDIR /'merged_reads/{subsample}/{sample}.2.fq.gz',
-        fqzs = OUTDIR /'merged_reads/{subsample}/{sample}.s.fq.gz',
-        fqzm = OUTDIR /'merged_reads/{subsample}/{sample}.m.fq.gz',
-        hist = OUTDIR /'merged_reads/{subsample}/{sample}.merge.hist',
-        marker = touch(OUTDIR/'merged_reads/{subsample}/{sample}.merge.done')
+        fqz1 = OUTDIR /'merged_reads/{sample}/{sample}.1.fq.gz',
+        fqz2 = OUTDIR /'merged_reads/{sample}/{sample}.2.fq.gz',
+        fqzs = OUTDIR /'merged_reads/{sample}/{sample}.s.fq.gz',
+        fqzm = OUTDIR /'merged_reads/{sample}/{sample}.m.fq.gz',
+        hist = OUTDIR /'merged_reads/{sample}/{sample}.merge.hist',
+        marker = touch(OUTDIR/'merged_reads/{sample}/{sample}.merge.done')
     params:
         minoverlap = 16,
         scratch = 1000,
         mem = 8000,
         time = 235,
-        qerrfile = OUTDIR /'merged_reads/{subsample}/{sample}.merge.qerr',
-        qoutfile = OUTDIR /'merged_reads/{subsample}/{sample}.merge.qout'
+        qerrfile = lambda wildcards: OUTDIR /f'logs/merge/{wildcards.sample}.merge.qerr',
+        qoutfile = lambda wildcards: OUTDIR /f'logs/merge/{wildcards.sample}.merge.qout'
     conda:
         "envs/qc.yaml"
     log:
-        log = OUTDIR /'merged_reads/{subsample}/{sample}.merge.log',
-        command = OUTDIR /'merged_reads/{subsample}/{sample}.merge.command'
+        log = OUTDIR /'logs/merge/{sample}.merge.log',
     benchmark:
-        OUTDIR /'merged_reads/{subsample}/{sample}.merge.benchmark'
+        OUTDIR /'merged_reads/{sample}/{sample}.merge.benchmark'
     threads:
         16
     shell:
@@ -143,6 +114,11 @@ rule merge:
 
 
 
+
+## UNDER CONSTRUCTION ##
+rule test_fastqc:
+    input: '/science/ansintsova/esbl_strains/clean_reads/LL10/LL10_FDSW202435993-1r_HF7HLDSXY_L4.1_fastqc.html'
+
 rule fastqc:
     input: fqz = '{sample}.fq.gz'
     output:
@@ -151,9 +127,11 @@ rule fastqc:
     threads:
         1
     params:
+        outDir = OUTDIR/'QC',
         scratch = 1000,
         time = 100,
         mem = 4000,
+
         qerrfile = '{sample}.fastqc.qerr',
         qoutfile = '{sample}.fastqc.qout'
     conda:
@@ -162,33 +140,26 @@ rule fastqc:
         '{sample}.fastqc.log'
     shell:
         '''
-        fastqc {input.fqz} &> {log}
+        fastqc {input.fqz}  &> {log}
         '''
 
+# todo NOT WORKING right now
+# rule multiqc:
+#     input:
+#         [OUTDIR/f'clean_reads/{sub}/{sam}.1.fastqc.done' for sub, sam in zip(SUBSAMPLES, SAMPLES)][0],
+#         [OUTDIR/f'clean_reads/{sub}/{sam}.2.fastqc.done' for sub, sam in zip(SUBSAMPLES, SAMPLES)][0]
+#     output:
+#         OUTDIR/'QC/multiqc_report.html'
+#     params:
+#         outdir=OUTDIR/'QC',
+#         readDir = OUTDIR/'clean_reads',
+#         scratch = 1000,
+#         time = 100,
+#         mem = 4000,
+#         qerrfile = OUTDIR/'QC/QC.multiqc.qerr',
+#         qoutfile = OUTDIR/'QC/QC.multiqc.qout'
+#     conda:
+#         'envs/qc.yaml'
+#     shell: "multiqc {params.readDir} -o {params.outdir}"
 
-rule multiqc:
-    input:
-        [OUTDIR/f'clean_reads/{sub}/{sam}.1.fastqc.done' for sub, sam in zip(SUBSAMPLES, SAMPLES)],
-        [OUTDIR/f'clean_reads/{sub}/{sam}.2.fastqc.done' for sub, sam in zip(SUBSAMPLES, SAMPLES)]
-    output:
-        OUTDIR/'QC/multiqc_report.html'
-    params:
-        outdir=OUTDIR/'QC',
-        scratch = 1000,
-        time = 100,
-        mem = 4000,
-    conda:
-        'envs/qc.yaml'
-    shell: "multiqc {params.outdir} -o {params.outdir}"
 
-
-
-        # '''
-        #  #!/bin/bash
-        #  command="
-        #  rsync {input.fqzs} {output.fqzs}
-        #  bbmerge.sh -Xmx64G pigz=t bgzip=f threads={threads} overwrite=t in1={input.fqz1} in2={input.fqz2} out={output.fqzm} outu1={output.fqz1} outu2={output.fqz2} minoverlap={params.minoverlap} usejni=t ihist={output.hist} &> {log.log}
-        #  ";
-        #  echo "$command" > {log.command};
-        #  eval "$command"
-        # '''

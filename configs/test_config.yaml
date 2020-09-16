@@ -1,6 +1,6 @@
-dataDir: /nfs/home/ansintsova/esbl_strains/raw
-outDir: /nfs/home/ansintsova/esbl_strains
-sampleFile: /nfs/home/ansintsova/esbl_strains/samples.txt
+dataDir: /science/ansintsova/esbl_strains/raw
+outDir: /science/ansintsova/esbl_strains
+sampleFile: /science/ansintsova/esbl_strains/samples.txt
 
 #Preprocessing
 mink: 11
@@ -15,3 +15,6 @@ phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage
 bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
 bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
 
+
+
+bwa mem  -t 4 -M /nfs/home/ansintsova/esbl_strains/assembly/LL9/scaffolds.fasta /nfs/home/ansintsova/esbl_strains/clean_reads/LL9/LL9.1.fq.gz /nfs/home/ansintsova/esbl_strains/clean_reads/LL9/LL9.2.fq.gz | samtools sort --reference /nfs/home/ansintsova/esbl_strains/assembly/LL9/scaffolds.fasta -l 9 -@ 4 -O bam -o /nfs/home/ansintsova/esbl_strains/bams/LL9/LL9.bam -T /nfs/home/ansintsova/esbl_strains/bams/LL9/LL9.bam.tmp; samtools index /nfs/home/ansintsova/esbl_strains/bams/LL9/LL9.bam

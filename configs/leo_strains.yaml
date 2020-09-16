@@ -1,6 +1,9 @@
-dataDir: /science/ansintsova/esbl_strains/raw
-outDir: /science/ansintsova/esbl_strains/merged
-sampleFile: /science/ansintsova/esbl_strains/samples.txt
+# August 28, 2020
+
+dataDir: /nfs/home/ansintsova/esbl_strains/raw
+outDir:  /science/ansintsova/esbl_strains/
+sampleFile: /nfs/home/ansintsova/esbl_strains/samples.txt
+reference: LL6
 
 #Preprocessing
 mink: 11
@@ -8,10 +11,15 @@ trimq: 14
 mapq: 20
 minlen: 45
 
-merged: true
+merged: false #By default to do not use merge for isolate genome assembly
+
+
+#
+tmpdir: /science/ansintsova/esbl_strains/tmp
+ram: 4
+
 # Standard parameters. Dont change these!!!
 adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
 phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
 bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
 bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
-

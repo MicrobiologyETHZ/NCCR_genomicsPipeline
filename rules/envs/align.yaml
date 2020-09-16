@@ -1,8 +1,7 @@
 channels:
-  - defaults
   - conda-forge
   - bioconda
+  - defaults
 dependencies:
-  - bbmap
-#  - multiqc
-#  - fastqc
+  - samtools==1.9
+  - bwa

@@ -1,8 +1,7 @@
 channels:
-  - defaults
   - conda-forge
   - bioconda
+  - defaults
 dependencies:
-  - bbmap
-#  - multiqc
-#  - fastqc
+  - bcftools==1.10
+  - gatk4
