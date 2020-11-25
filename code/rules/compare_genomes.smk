@@ -1,5 +1,4 @@
 from pathlib import Path
-import scripts.get_vars as gv
 
 # DATADIR = Path(config['dataDir'])
 # OUTDIR = Path(config['outDir'])
