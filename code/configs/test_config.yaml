@@ -1,0 +1,47 @@
+projectName: Test
+
+dataDir: tests/data/raw
+outDir: tests/data
+sampleFile: configs/test_samples.txt
+species: Escherichia_coli
+fq_fwd: .1.fq.gz
+fq_rvr: .2.fq.gz
+
+#Preprocessing
+qc: yes
+mink: 11
+trimq: 14 # 37
+mapq: 20
+minlen: 45
+
+merged: false # By default to do not use merge for isolate genome assembly
+
+fastqc: no
+
+# Align to reference
+reference: tests/data/ref/LL6.scaffolds.min0.fasta # sample name (ex. LL1) or path to genome assembly
+scaffold: #min0, min500 if want to use filtered assembly
+
+#
+tmpdir: /science/ansintsova/esbl_strains/tmp
+ram: 4
+
+# phylophlan
+phyloConfig: /science/ansintsova/esbl_strains/phylophlan/isolates_config.cfg
+fnaFolder:
+
+
+# panX
+gbkFolder: /science/ansintsova/esbl_strains/plasmid/
+panXpath: /nfs/home/ansintsova/pan-genome-analysis
+cg:  #default should be 1, might need lower one for highly divergent things
+
+# ariba
+aribaDB: /science/ansintsova/esbl_strains/db/card/out.card.prepareref
+
+
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'

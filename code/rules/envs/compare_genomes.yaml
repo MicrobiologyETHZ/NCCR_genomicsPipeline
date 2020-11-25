@@ -1,0 +1,7 @@
+channels:
+  - bioconda
+dependencies:
+  - mummer
+  - fastani
+  - phylophlan
+  - ariba=2.14
