@@ -1,81 +1,118 @@
-from pathlib import Path
-import scripts.get_vars as gv
+#
+# rule zip:
+#     input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
+#
 
-DATADIR = Path(config['dataDir'])
-OUTDIR = Path(config['outDir'])
-ADAPTERS = Path(config['adapters'])
-PHIX = Path(config['phix'])
-SFILE = Path(config['sampleFile'])
-
-SUBSAMPLES = gv.get_subsamples(SFILE)
-SAMPLES = gv.get_samples(DATADIR, SUBSAMPLES)
-
-
-rule annotate_all:
-    input: [OUTDIR/f'annotation/{sub}/{sub}.prokka.done' for sub in SUBSAMPLES][0],
-
-rule zip:
-    input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
+rule gunzipAnn:
+    input:
+        OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta.gz'
+    output:
+        OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta'
+    params:
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    conda:
+        'envs/compare_genomes.yaml'
+    threads:
+        8
+    shell:
+        "gunzip {input} "
 
 
 rule prokka:
     input:
-        scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
-        marker = OUTDIR/'assembly/{sample}/{sample}.spades.done'
+        scaffolds = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta',
+        marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done'
     output:
-        gff = OUTDIR/'annotation/{sample}/{sample}.gff',
-        gbk = OUTDIR/'annotation/{sample}/{sample}.gbk',
-        fna = OUTDIR/'annotation/{sample}/{sample}.fna',
-        faa = OUTDIR/'annotation/{sample}/{sample}.faa',
-        marker = touch(OUTDIR/'annotation/{sample}/{sample}.prokka.done')
+        gff = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gff',
+        gbk = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gbk',
+        fna = OUTDIR/'{assembly}/{sample}/prokka/{sample}.fna',
+        faa = OUTDIR/'{assembly}/{sample}/prokka/{sample}.faa',
+        marker = touch(OUTDIR/'{assembly}/{sample}/prokka/{sample}.prokka.done')
     params:
         locustag = '{sample}',
-        outdir = OUTDIR/'annotation',
+        outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/prokka',
         scratch = 1000,
         mem = 4000,
         time = 235,
-        qerrfile = OUTDIR/'annotation/{sample}/{sample}.prokka.qerr',
-        qoutfile = OUTDIR/'annotation/{sample}/{sample}.prokka.qout'
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qout'
     conda:
         'envs/annotate.yaml'
+    log:
+        log = OUTDIR/'logs/{assembly}/{sample}/prokka/{sample}.prokka.log'
     threads:
-        2
+        8
     shell:
-        'prokka --outdir {params.outdir}/{params.locustag} '
+        'prokka --outdir {params.outdir} '
         '--locustag {params.locustag} '
         '--compliant '
         '--prefix {params.locustag} {input.scaffolds} '
-        '--force '
+        '--force &> {log.log} '
 
 
-rule prokka_plasmid:
-    input:
-        scaffolds = OUTDIR/'plasmid/{sample}/scaffolds.fasta',
-        marker = OUTDIR/'plasmid/{sample}/{sample}.spades.done'
-    output:
-        gff = OUTDIR/'plasmid/annotation/{sample}/{sample}.gff',
-        gbk = OUTDIR/'plasmid/annotation/{sample}/{sample}.gbk',
-        fna = OUTDIR/'plasmid/annotation/{sample}/{sample}.fna',
-        faa = OUTDIR/'plasmid/annotation/{sample}/{sample}.faa',
-        marker = touch(OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.done')
+rule emapper:
+    input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
+    output: marker = touch(OUTDIR/"{assembly}/{sample}/eggnog/{sample}.eggnog.done")
     params:
-        locustag = '{sample}',
-        outdir = OUTDIR/'plasmid/annotation',
+        sample = "{sample}",
+        outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/eggnog',
+        dataDir = "/science/emapper-data-5.0.0", # todo put this into config
         scratch = 1000,
         mem = 4000,
         time = 235,
-        qerrfile = OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.qerr',
-        qoutfile = OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.qout'
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emappper.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qout'
     conda:
-        'envs/annotate.yaml'
+        'envs/emapper.yaml'
+    log:
+        log = OUTDIR/'logs/{assembly}/{sample}/eggnog/{sample}.emapper.log'
     threads:
-        2
+        16
     shell:
-        'prokka --outdir {params.outdir}/{params.locustag} '
-        '--locustag {params.locustag} '
-        '--compliant '
-        '--prefix {params.locustag} {input.scaffolds} '
-        '--force '
+        'emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
+        '--cpu 16 --temp_dir {params.outdir} '
+        ' -m diamond --data_dir {params.dataDir} &> {log.log} '
+
+
+
+
+
+#
+# rule prokka_plasmid:
+#     input:
+#         scaffolds = OUTDIR/'plasmid/{sample}/scaffolds.fasta',
+#         marker = OUTDIR/'plasmid/{sample}/{sample}.spades.done'
+#     output:
+#         gff = OUTDIR/'plasmid/annotation/{sample}/{sample}.gff',
+#         gbk = OUTDIR/'plasmid/annotation/{sample}/{sample}.gbk',
+#         fna = OUTDIR/'plasmid/annotation/{sample}/{sample}.fna',
+#         faa = OUTDIR/'plasmid/annotation/{sample}/{sample}.faa',
+#         marker = touch(OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.done')
+#     params:
+#         locustag = '{sample}',
+#         outdir = OUTDIR/'plasmid/annotation',
+#         scratch = 1000,
+#         mem = 4000,
+#         time = 235,
+#         qerrfile = OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.qerr',
+#         qoutfile = OUTDIR/'plasmid/annotation/{sample}/{sample}.prokka.qout'
+#
+#     conda:
+#         'envs/annotate.yaml'
+#     threads:
+#         2
+#     shell:
+#         'prokka --outdir {params.outdir}/{params.locustag} '
+#         '--locustag {params.locustag} '
+#         '--compliant '
+#         '--prefix {params.locustag} {input.scaffolds} '
+#         '--force '
+
+# todo add EgNOGG annotation
 
 
 

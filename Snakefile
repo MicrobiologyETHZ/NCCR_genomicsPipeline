@@ -1,10 +1,11 @@
 #from pathlib import Path
 from scripts.get_vars import *
+import sys
 
 DATADIR = Path(config['dataDir'])
 OUTDIR = Path(config['outDir'])
 SAMPLEFILE = Path(config['sampleFile'])
-SUBSAMPLES = get_subsamples(SAMPLEFILE)
+SAMPLES = get_subsamples(SAMPLEFILE)
 
 
 
@@ -18,66 +19,111 @@ include: "rules/call_variants.smk"
 include: "rules/typing.smk"
 
 
+if not config['fastqc']:
+    rule preprocess:
+        input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
+elif config['fastqc'] == 'after':
+    rule preprocess:
+        input: OUTDIR/'fastqc/after.multiqc.done'
+elif config['fastqc'] == 'before':
+    rule preprocess:
+        input: OUTDIR/'fastqc/before.multiqc.done'
+elif config['fastqc'] == 'both':
+    rule preprocess:
+        input: OUTDIR/'fastqc/both.multiqc.done'
+else:
+    print(f'{config["fastqc"]} is not a recognized option for fastqc')
+    sys.exit(1)
 
-rule preprocess:
-    input: [OUTDIR/f'clean_reads/{sub}/{sub}.qc.done' for sub in SUBSAMPLES]
+
+rule merge_fastq:
+    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
 
 
-rule merge:
-    input: [OUTDIR/f'merged_reads/{sam}/{sam}.merge.done' for sam in SUBSAMPLES]
-
-
+# Assembly and Annotation
 rule assemble:
-    input: [OUTDIR/f'assembly/{sub}/{sub}.spades.done' for sub in SUBSAMPLES],
-        [OUTDIR/f'plasmid/{sub}/{sub}.spades.done' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
 
-rule assemble_clean:
-    input: [OUTDIR/f'assembly/{sub}/{sub}.assembly_cleanup.done' for sub in SUBSAMPLES],
-        [OUTDIR/f'plasmid/{sub}/{sub}.assembly_cleanup.done' for sub in SUBSAMPLES]
 
-rule quast:
-    input: [OUTDIR/f'assembly/{sample}/report.txt' for sample in SUBSAMPLES],
-        [OUTDIR/f'plasmid/{sample}/report.txt' for sample in SUBSAMPLES]
+rule quastCheck:
+    input: OUTDIR/'quast/assembly_qc.quast_all.done'
+
+rule plasmid:
+    input: [OUTDIR/f'plasmid/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES],
+        [OUTDIR/f'plasmid/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
+        [OUTDIR/f'plasmid/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
 rule annotate:
-    input: [OUTDIR/f'annotation/{sub}/{sub}.prokka.done' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'assembly/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
+        [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
 
-rule annotate_plasmid:
-    input: [OUTDIR/f'plasmid/annotation/{sub}/{sub}.prokka.done' for sub in SUBSAMPLES]
+# Compare Genomes
 
 rule nucmer:
-    input: [OUTDIR/f'mummer/{subsample}/{subsample}.report' for subsample in SUBSAMPLES]
+    input: [OUTDIR/f'mummer/LL23_{sample}.coords' for sample in SAMPLES]
+
+
+rule runANI:
+    input: [OUTDIR/f'ANI/plasmid/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
+
+
+rule phylogeny:
+    input: OUTDIR/f'phylophlan/{config["projectName"]}/output_isolates/RAxML_bestTree.input_isolates.tre'
+
+rule findAb:
+    input: OUTDIR/f'ariba/summary.done'
+
+
+#_________________________________________________
+rule pileup:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+
+rule runDaisy:
+    input: OUTDIR/f'daisy/LL13.daisy.done'
+
 
 
 rule align:
-    input: [OUTDIR/f'bams/{sub}/{sub}.bwa.done' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'bams/{sub}/{sub}.bwa.done' for sub in SAMPLES]
 
 rule align_with_ref:
-    input: [OUTDIR/f'ref_bams/{sub}/{sub}.bwa.done' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'ref_bams/{sub}/{sub}.refbwa.done' for sub in SAMPLES]
 
 
 rule call_vars:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.vcf.done' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'VCF/{sub}/{sub}.vcf.done' for sub in SAMPLES]
 
-rule runANI:
-    input: [OUTDIR/f'ANI/{i}_{j}_fastani.out' for i in SUBSAMPLES for j in SUBSAMPLES]
+rule call_vars2:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.AF.vcf.done' for sub in SAMPLES],
+        [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+
+rule call_vars3:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]
+
 
 rule markDup:
-    input: [OUTDIR/f'bams/{sub}/{sub}.rmdup.bam' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'bams/{sub}/{sub}.rmdup.bam' for sub in SAMPLES]
 
 # HElPER RULES
 
 rule type:
-    input: [OUTDIR/f'typing/{sub}/{sub}.mlst' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'typing/{sub}/{sub}.mlst' for sub in SAMPLES]
+    # env doesn't work on cluster
 
 
 rule serotype:
-    input: [OUTDIR/f'typing/{sub}/output.tsv' for sub in SUBSAMPLES]
+    input: [OUTDIR/f'typing/{sub}/output.tsv' for sub in SAMPLES]
 
 
+rule anVar:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
 
+rule anVar2:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.AF.snpEff.done' for sub in SAMPLES]
 
+rule pangenome:
+    input: [OUTDIR/f'panX/data/{config["projectName"]}/vis/strain_tree.nwk']
 
 # rule gzip:
 #     input: '{sample}.fasta',

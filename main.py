@@ -1,3 +1,6 @@
+# Under construction does not work!!
+
+
 import argparse
 import subprocess
 import shlex
@@ -16,10 +19,10 @@ def parse_args():
 
 def snakemake_cmd(args):
 
-    rstring = r'"DIR=\$(dirname {params.qoutfile}); mkdir -p \"\${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
+    rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
     part1 =  shlex.split(f'snakemake --configfile {args.config} --use-conda -k --cluster ')
 
-    part2 = [f'{rstring}' ]
+    part2 = shlex.split(f'{rstring}')
 
     part3 = shlex.split(f' -p -j 4 --max-jobs-per-second 1 {args.analysis}')
     return part1 + part2 + part3
@@ -29,8 +32,8 @@ if __name__ == "__main__":
     args = parse_args()
     cmd = snakemake_cmd(args)
     if args.np:
-        print(cmd)
+        print(" ".join(cmd))
     else:
-        #print(shlex.split(cmd))
-        subprocess.check_call(cmd, shell=True)
-        print('Done?')
+        print(cmd)
+        subprocess.check_call(cmd)
+        print('Done!')

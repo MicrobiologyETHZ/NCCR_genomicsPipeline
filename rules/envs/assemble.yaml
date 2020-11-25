@@ -1,7 +1,7 @@
 channels:
   - bioconda
 dependencies:
-  - spades
+  - spades>=3.14
   - biopython>1.7
   - assembly-stats
 

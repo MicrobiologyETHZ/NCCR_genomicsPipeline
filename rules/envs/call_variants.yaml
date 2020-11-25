@@ -5,3 +5,4 @@ channels:
 dependencies:
   - bcftools==1.10
   - gatk4
+  - snpeff >= 5.0

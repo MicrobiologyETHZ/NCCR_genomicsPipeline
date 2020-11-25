@@ -83,3 +83,5 @@ rule assembly_cleanup:
         echo "$command" > {log.command};
         eval "$command"
         '''
+
+

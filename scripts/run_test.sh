@@ -1,1 +1,0 @@
-snakemake --configfile configs/leo_strains.yaml --use-conda -k --cluster "DIR=\$(dirname {params.qoutfile}); mkdir -p \"\${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M" -p -j 1 --max-jobs-per-second 1 call_vars

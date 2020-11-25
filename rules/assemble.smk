@@ -1,5 +1,4 @@
 
-
 def get_merged(wildcards):
     if config['merged']== True:
         return '--pe1-m ' + str(OUTDIR) + f'/merged_reads/{wildcards.sample}/{wildcards.sample}.m.fq.gz '
@@ -15,8 +14,8 @@ rule assemble_wga:
             s = OUTDIR/READ_DIR/'{sample}/{sample}.s.fq.gz',
         output:
             marker = touch(OUTDIR/'assembly/{sample}/{sample}.spades.done'),
-            #scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
-            #contigs = OUTDIR/'assembly/{sample}/contigs.fasta'
+            scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
+            contigs = OUTDIR/'assembly/{sample}/contigs.fasta'
         params:
             outdir = lambda wildcards: OUTDIR/f'assembly/{wildcards.sample}',
             qerrfile = lambda wildcards: OUTDIR/f'logs/assembly/{wildcards.sample}.spades.qerr',
@@ -40,18 +39,17 @@ rule assemble_wga:
             "-o {params.outdir} &> {log.log} "
 
 
-
 rule assemble_plasmid:
         input:
             fq1 = OUTDIR/READ_DIR/'{sample}/{sample}.1.fq.gz',
             fq2 = OUTDIR/READ_DIR/'{sample}/{sample}.2.fq.gz',
             s = OUTDIR/READ_DIR/'{sample}/{sample}.s.fq.gz',
         output:
-            marker = touch(OUTDIR/'plasmid/{sample}/{sample}.spades.done'), #todo put these all in the OUTDIR
-            #scaffolds = OUTDIR/'plasmid/{sample}/scaffolds.fasta',
-            #contigs = OUTDIR/'plasmid/{sample}/contigs.fasta'
+            marker = touch(OUTDIR/'plasmid/{sample}/{sample}.spades.done'),
+            scaffolds = OUTDIR/'plasmid/{sample}/scaffolds.fasta',
+            contigs = OUTDIR/'plasmid/{sample}/contigs.fasta'
         params:
-            outdir = lambda wildcards: OUTDIR/f'assembly/{wildcards.sample}',
+            outdir = lambda wildcards: OUTDIR/f'plasmid/{wildcards.sample}',
             qerrfile = lambda wildcards: OUTDIR/f'logs/plasmid/{wildcards.sample}.plasmid.spades.qerr',
             qoutfile = lambda wildcards: OUTDIR/f'logs/plasmid/{wildcards.sample}.plasmid.spades.qout',
             merged = get_merged,
@@ -59,11 +57,11 @@ rule assemble_plasmid:
             mem = 7700,
             time = 1400
         log:
-            log = OUTDIR/'logs/plasmid/{sample}.plasmid.spades.log',
+            log = OUTDIR/'logs/plasmid/{sample}.spades.log',
         conda:
             'envs/assemble.yaml'
         benchmark:
-            OUTDIR/'plasmid/{sample}/{sample}.spades.benchmark'
+            OUTDIR/'plasmid/{sample}/{sample}.spades.benchmark' # todo what is it?
         threads:
             8
         shell:
@@ -74,27 +72,21 @@ rule assemble_plasmid:
 
 
 ##############################
-rule clean:
-    input:
-        [OUTDIR/f'assembly/{sub}/{sub}.assembly_cleanup.done' for sub in SUBSAMPLES],
-        [OUTDIR/f'plasmid/{sub}/{sub}.assembly_cleanup.done' for sub in SUBSAMPLES]
-
-
 
 rule assembly_cleanup:
     input:
-        marker = OUTDIR/'{assembly}/{sample}.spades.done',
-        scaffolds = OUTDIR/'{assembly}/scaffolds.fasta',
-        contigs = OUTDIR/'{assembly}/contigs.fasta'
+        marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done',
+        scaffolds = OUTDIR/'{assembly}/{sample}/scaffolds.fasta',
+        contigs = OUTDIR/'{assembly}/{sample}/contigs.fasta'
     output:
-        marker = touch(OUTDIR/'{assembly}/{sample}.assembly_cleanup.done'),
-        scaffolds0 = OUTDIR/'{assembly}/{sample}.scaffolds.min0.fasta.gz',
-        scaffolds500 = OUTDIR/'{assembly}/{sample}.scaffolds.min500.fasta.gz',
-        scaffolds1000 = OUTDIR/'{assembly}/{sample}.scaffolds.min1000.fasta.gz',
-        contigs0 = OUTDIR/'{assembly}/{sample}.contigs.min0.fasta.gz',
-        contigs500 = OUTDIR/'{assembly}/{sample}.contigs.min500.fasta.gz',
-        contigs1000 = OUTDIR/'{assembly}/{sample}.contigs.min1000.fasta.gz',
-        stats = OUTDIR/'{assembly}/{sample}.assembly.stats'
+        marker = touch(OUTDIR/'{assembly}/{sample}/{sample}.assembly_cleanup.done'),
+        scaffolds0 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta.gz',
+        scaffolds500 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min500.fasta.gz',
+        scaffolds1000 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min1000.fasta.gz',
+        contigs0 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min0.fasta.gz',
+        contigs500 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min500.fasta.gz',
+        contigs1000 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min1000.fasta.gz',
+        stats = OUTDIR/'{assembly}/{sample}/{sample}.assembly.stats'
     params:
         mem = 1000,
         scratch = 1000,
@@ -106,8 +98,7 @@ rule assembly_cleanup:
     conda:
         'envs/assembly_cleanup.yaml'
     log:
-        log = OUTDIR/'logs/{assembly}/{sample}.assembly_cleanup.stats.log',
-        command = OUTDIR/'logs/{assembly}/{sample}.assembly_cleanup.stats.command'
+        log = OUTDIR/'logs/{assembly}/{sample}.assembly_cleanup.stats.log'
     threads:
         8
     shell:
@@ -142,14 +133,13 @@ rule assembly_cleanup:
         if [[ -f "{params.workfolder}/before_rr.fasta" ]]; then
             rm {params.workfolder}/before_rr.fasta
         fi
-        python /nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENERAL_METAGT_ANALYSIS_PAN/code/pipeline/contig_filter.py {params.sample} contigs {params.workfolder}/contigs.fasta.gz {params.workfolder}
-        python /nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENERAL_METAGT_ANALYSIS_PAN/code/pipeline/contig_filter.py {params.sample} scaffolds {params.workfolder}/scaffolds.fasta.gz {params.workfolder}
+        python ./scripts/contig_filter.py {params.sample} contigs {params.workfolder}/contigs.fasta.gz {params.workfolder}
+        python ./scripts/contig_filter.py {params.sample} scaffolds {params.workfolder}/scaffolds.fasta.gz {params.workfolder}
         pigz -f -p {threads} {params.workfolder}/*min*fasta
         pigz -f -p {threads} {params.workfolder}/*hashes
         assembly-stats -l 500 -t <(zcat {params.workfolder}/{params.sample}.scaffolds.min500.fasta.gz) > {params.workfolder}/{params.sample}.assembly.stats
         &> {log.log}
         ";
-        echo "$command" > {log.command};
         eval "$command"
 #         '''
 

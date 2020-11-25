@@ -8,12 +8,13 @@ rule mlst:
          scratch = 1000,
          mem = 8000,
          time = 235,
-         qerrfile = OUTDIR /'typing/{sample}/{sample}.mlst.qerr',
-         qoutfile = OUTDIR /'typing/{sample}/{sample}.mlst.qout'
+         qerrfile = lambda wildcards: OUTDIR/f'logs/typing/{wildcards.sample}.mlst.qerr',
+         qoutfile =lambda wildcards: OUTDIR/f'logs/typing/{wildcards.sample}.mlst.qout',
     conda:
         'envs/typing.yaml'
+    log: log = OUTDIR/'logs/typing/{sample}.mlst.log'
     shell:
-         'mlst {input.scaf} > {output.mlst}'
+         'mlst {input.scaf} > {output.mlst} 2> {log.log}'
 
 rule ectyper:
     input:

@@ -417,3 +417,7 @@ buildNumber.properties
 /scratch/
 /scratch
 .snakemake/
+
+# added by Anna for general purposes :)
+
+*data*

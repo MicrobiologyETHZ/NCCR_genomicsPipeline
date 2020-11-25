@@ -8,7 +8,8 @@ SFILE = Path(config['sampleFile'])
 SUBSAMPLES = gv.get_subsamples(SFILE)
 
 rule run_quast:
-    input: scaf1 = OUTDIR/'{assembly}/{sample}/scaffolds.fasta.gz',
+    input: scaf1 = OUTDIR/'{assembly}/{sample}/scaffolds.fasta',
+        m = OUTDIR/'{assembly}/{sample}/{sample}.spades.done',
         r1 = OUTDIR/'clean_reads/{sample}/{sample}.1.fq.gz',
         r2 = OUTDIR/'clean_reads/{sample}/{sample}.2.fq.gz',
     output:
@@ -31,40 +32,40 @@ rule run_quast:
          '-o {params.outDir} '
 
 
-rule gzip:
-    input: '{sample}.fasta',
-    output: '{sample}.fasta.gz',
-    params:
-        qerrfile = '{sample}.gzip.qerr',
-        qoutfile = '{sample}.gzip.qout',
-        scratch = 6000,
-        mem = 7700,
-        time = 1400
-    threads:
-        8
-    shell:
-        'gzip {input}'
-
-
-
-# rule run_quast_all:
-#     input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
-#     output:
-#         touch(OUTDIR/'quast/assembly_qc/assembly_qc.quast.done')
-#         #OUTDIR/'quast/report.txt'
+# rule gzip:
+#     input: '{sample}.fasta',
+#     output: '{sample}.fasta.gz',
 #     params:
-#         outDir = OUTDIR/'quast/assembly_qc',
-#         qerrfile = OUTDIR/'quast/assembly.quast.qerr',
-#         qoutfile = OUTDIR/'quast/assemlby.quast.qout',
+#         qerrfile = '{sample}.gzip.qerr',
+#         qoutfile = '{sample}.gzip.qout',
 #         scratch = 6000,
 #         mem = 7700,
 #         time = 1400
 #     threads:
-#         4
-#     conda:
-#         'envs/quast.yaml'
+#         8
 #     shell:
-#          'quast.py {input} '
-#          '-o {params.outDir} '
+#         'gzip {input}'
+
+
+
+rule run_quast_all:
+    input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
+    output:
+        touch(OUTDIR/'quast/assembly_qc.quast_all.done')
+        #OUTDIR/'quast/report.txt'
+    params:
+        outDir = OUTDIR/'quast/assembly_qc',
+        qerrfile = OUTDIR/'quast/assembly.quast.qerr',
+        qoutfile = OUTDIR/'quast/assemlby.quast.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    threads:
+        4
+    conda:
+        'envs/quast.yaml'
+    shell:
+         'quast.py {input} '
+         '-o {params.outDir} '
 
 

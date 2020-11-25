@@ -3,5 +3,5 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - mlst
+  - mlst >= 2.11
   - ectyper
