@@ -96,7 +96,7 @@ rule call_vars:
 
 rule call_vars2:
     input: [OUTDIR/f'VCF/{sub}/{sub}.AF.vcf.done' for sub in SAMPLES],
-        [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+       # [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
 
 rule call_vars3:
     input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]
