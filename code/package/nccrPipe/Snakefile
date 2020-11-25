@@ -79,8 +79,7 @@ rule findAb:
 rule pileup:
     input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
 
-rule runDaisy:
-    input: OUTDIR/f'daisy/LL13.daisy.done'
+
 
 
 

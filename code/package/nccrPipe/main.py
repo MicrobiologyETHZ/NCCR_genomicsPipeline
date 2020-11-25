@@ -1,7 +1,9 @@
 import argparse
 import subprocess
 import shlex
+import shutil
 import os
+from pathlib import Path
 
 
 def parse_args():
@@ -29,11 +31,18 @@ def snakemake_cmd(args):
 
 def main():
     args = parse_args()
-    cmd = snakemake_cmd(args)
-    os.chdir("./nccrPipe")
-    print(" ".join(cmd))
-    subprocess.check_call(cmd)
-    print('Done!')
+    wdPath = Path(__file__).parent.absolute()
+    default_config_path = str(wdPath/'configs/test_config.yaml')
+    if args.analysis == 'create_config':
+        if not os.path.isfile(args.config):
+            shutil.copyfile(default_config_path, args.config)
+        else:
+            print("Config file already exists")
+    else:
+        cmd = snakemake_cmd(args)
+        print(" ".join(cmd))
+        subprocess.check_call(cmd, cwd=wdPath)
+        print('Done!')
 
 
 if __name__ == "__main__":
