@@ -1,8 +1,0 @@
-channels:
-  - defaults
-  - conda-forge
-  - bioconda
-dependencies:
-  - bbmap
-  - multiqc
-  - fastqc==0.11.5
