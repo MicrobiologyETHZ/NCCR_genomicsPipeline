@@ -1,7 +1,7 @@
 projectName: Test
 
-dataDir: ../../../data/test/raw
-outDir: ../../../data/test
+dataDir: ../../../data/raw
+outDir: ../../../data/processed
 sampleFile: configs/test_samples.txt
 species: Escherichia_coli
 fq_fwd: .1.fq.gz
@@ -19,7 +19,7 @@ merged: false # By default to do not use merge for isolate genome assembly
 fastqc: no
 
 # Align to reference
-reference: ../../../data/test/ref/LL6.scaffolds.min0.fasta # sample name (ex. LL1) or path to genome assembly
+reference: ../../../data/processed/ref/LL6.scaffolds.min0.fasta # sample name (ex. LL1) or path to genome assembly
 scaffold: #min0, min500 if want to use filtered assembly
 
 #

@@ -5,6 +5,8 @@ import shutil
 import os
 from pathlib import Path
 
+from .scripts import configure_project
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -35,7 +37,8 @@ def main():
     default_config_path = str(wdPath/'configs/test_config.yaml')
     if args.analysis == 'create_config':
         if not os.path.isfile(args.config):
-            shutil.copyfile(default_config_path, args.config)
+            #shutil.copyfile(default_config_path, args.config)
+            new_settings = configure_project.configure(default_config_path, args.config)
         else:
             print("Config file already exists")
     else:
