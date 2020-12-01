@@ -198,21 +198,3 @@ rule annotateVars2:
     shell:
         'python scripts/snpEff_db.py rename {input.fvcf} {params.rvcf} {params.ref}; '
         'snpEff {params.ref} {params.rvcf} > {output.avcf} 2> {log.log}'
-
-#DP4[0]>20 || DP4[1]>20 ||
-
-# rule bcf_call:
-#          input: OUTDIR/'VCF/{sample}/{sample}.mpileup',
-#          output: OUTDIR/'VCF/{sample}/{sample}.vcf'
-#          params:
-#              qerrfile = OUTDIR/'VCF/{sample}/{sample}.mpileup.qerr',
-#              qoutfile = OUTDIR/'VCF/{sample}/{sample}.mpileup.qout',
-#              scratch = 6000,
-#              mem = 7700,
-#              time = 1400
-#          conda:
-#             'envs/call_variants.yaml'
-#          threads:
-#               8
-#          shell:
-#             'bcftools call -m -o {output} {input}'

@@ -67,6 +67,8 @@ def get_user_input(config_dict):
         project_dict[setting] = new_val
     process_extra = input("See extra settings? y/n\n\n")
     if process_extra == 'n':
+        for setting in extra:
+            project_dict[setting] = config_dict[setting]
         return project_dict
     else:
         for setting in extra:

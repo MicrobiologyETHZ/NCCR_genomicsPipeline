@@ -26,7 +26,7 @@ def snakemake_cmd(args):
         rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
         part1 = shlex.split(f'snakemake --configfile {args.config} --use-conda -k --cluster ')
         part2 = shlex.split(f'{rstring}')
-        part3 = shlex.split(f' -p -j 4 --max-jobs-per-second 1 {args.analysis}')
+        part3 = shlex.split(f' -p -j 6 --max-jobs-per-second 1 {args.analysis}')
         cmd = part1 + part2 + part3
     return cmd
 
