@@ -3,6 +3,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bbmap
+  - bbmap==38.18
   - multiqc
   - fastqc==0.11.5
