@@ -1,11 +1,11 @@
 projectName: Test
 
-dataDir: ../../../data/raw
-outDir: ../../../data/processed
-sampleFile: configs/test_samples.txt
+dataDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/raw
+outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/JN
+sampleFile: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/code/configs/JN_samples.txt
 species: Escherichia_coli
-fq_fwd: .1.fq.gz
-fq_rvr: .2.fq.gz
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
 
 #Preprocessing
 qc: yes
@@ -30,6 +30,12 @@ ram: 4
 phyloConfig: /science/ansintsova/esbl_strains/phylophlan/isolates_config.cfg
 fnaFolder:
 
+#snpEff
+snpEff_root: /nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/
+snpEff_reference: SL1344
+snpEff_gbk: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.gbk
+snpEff_fa: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.fasta
+snpEff_nenv: .snakemake/conda/88f605b9/share/snpeff-5.0-0/
 
 # panX
 gbkFolder: /science/ansintsova/esbl_strains/plasmid/

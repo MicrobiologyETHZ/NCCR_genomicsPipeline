@@ -124,3 +124,19 @@ MQ<50 calls with average mapping quality < 50
 
 
 ### Annotation:
+
+- Still a little complicated. Adding new genome to the snpEff database not integrated into the main pipeline.
+- Created conda environment within the pipeline: `.snakemake/conda/`
+- If want to add new genome, run
+```
+nccrPipe -c <config_file> -a addGenomeSnpEff
+```
+
+- Config file has to include path to the gbk (and ideally fasta) files, as well as the name of the genome. The chromosome names between the files have to match. 
+- If that doesn't fail, can run
+
+```
+nccrPipe -c <config_file> -a anVar
+```
+
+a

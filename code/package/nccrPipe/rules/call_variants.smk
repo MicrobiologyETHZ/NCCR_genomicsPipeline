@@ -84,27 +84,27 @@ rule sampile:
     shell:
         "samtools mpileup -O -s -f {input.scaf}  {input.bam} -o {output.mpile} --output-extra QNAME"
 
-
-rule bcf_filter:
-    input: OUTDIR/'VCF/{sample}/{sample}.vcf',
-        OUTDIR/'VCF/{sample}/{sample}.mpileup.done'
-    output: fvcf = OUTDIR/'VCF/{sample}/{sample}.filtered.vcf',
-        marker = touch(OUTDIR/'VCF/{sample}/{sample}.vcf.done')
-    params:
-        qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qout',
-        scratch = 6000,
-        mem = 7700,
-        time = 1400
-    log:
-        log = OUTDIR/'logs/VCF/{sample}.bcf.log'
-    conda:
-        'envs/call_variants.yaml'
-    threads:
-        8
-    shell:
-        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<100 || DP4[2]<10 || DP4[3]<10 ||  MQ<60' {input} | "
-        "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} 2> {log.log}"
+#
+# rule bcf_filter:
+#     input: OUTDIR/'VCF/{sample}/{sample}.vcf',
+#         OUTDIR/'VCF/{sample}/{sample}.mpileup.done'
+#     output: fvcf = OUTDIR/'VCF/{sample}/{sample}.filtered.vcf',
+#         marker = touch(OUTDIR/'VCF/{sample}/{sample}.vcf.done')
+#     params:
+#         qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qerr',
+#         qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qout',
+#         scratch = 6000,
+#         mem = 7700,
+#         time = 1400
+#     log:
+#         log = OUTDIR/'logs/VCF/{sample}.bcf.log'
+#     conda:
+#         'envs/call_variants.yaml'
+#     threads:
+#         8
+#     shell:
+#         "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<100 || DP4[2]<10 || DP4[3]<10 ||  MQ<60' {input} | "
+#         "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} 2> {log.log}"
 
 
 rule bcf_filter2:
@@ -155,11 +155,12 @@ rule bcf_filter3:
 
 rule annotateVars:
     input:
-        fvcf = OUTDIR/'VCF/{sample}/{sample}.filtered.vcf'
+        fvcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.vcf',
+        #snpEff_gbk =f'{config["snpEff_nenv"]}/data/{config["snpEff_reference"]}/genes.gbk'
     output: avcf = OUTDIR/'VCF/{sample}/{sample}.filtered.annotated.vcf',
         marker = touch(OUTDIR/'VCF/{sample}/{sample}.snpEff.done')
     params:
-        ref = config['reference'],
+        genome = config["snpEff_reference"],
         rvcf = lambda wildcards: OUTDIR/f'VCF/{wildcards.sample}/{wildcards.sample}.filtered.renamed.vcf',
         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.snpEff.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.snpEff.qout',
@@ -167,34 +168,63 @@ rule annotateVars:
         mem = 7700,
         time = 1400
     conda:
-        'envs/call_variants.yaml'
+        'envs/anVar.yaml'
     log: log = OUTDIR/'logs/VCF/{sample}/{sample}.snpEff.log'
     threads:
         8
     shell:
-        'python scripts/snpEff_db.py rename {input.fvcf} {params.rvcf} {params.ref}; '
-        'snpEff {params.ref} {params.rvcf} > {output.avcf} 2> {log.log}'
+        'snpEff {params.genome} {input.fvcf} > {output.avcf} 2> {log.log}'
 
 
-
-rule annotateVars2:
-    input:
-        fvcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.vcf'
-    output: avcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.annotated.vcf',
-        marker = touch(OUTDIR/'VCF/{sample}/{sample}.AF.snpEff.done')
+rule buildReferenceSnpEff:
+    input: gbk = config["snpEff_gbk"]
+    output:
+        touch(OUTDIR/f'VCF/{config["snpEff_reference"]}.snpEff_db.done'),
+        snpEff_gbk=f'{config["snpEff_nenv"]}/data/{config["snpEff_reference"]}/genes.gbk'
     params:
-        ref = config['reference'],
-        rvcf = lambda wildcards: OUTDIR/f'VCF/{wildcards.sample}/{wildcards.sample}.filtered.renamed.vcf',
-        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.AF.snpEff.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.AF.snpEff.qout',
+        genome_name = config["snpEff_reference"],
+        fa = config['snpEff_fa'],
+        nenv = config['snpEff_nenv'],
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{config["snpEff_reference"]}_db.snpEff.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{config["snpEff_reference"]}.snpEff.qout',
         scratch = 6000,
         mem = 7700,
         time = 1400
     conda:
-        'envs/call_variants.yaml'
-    log: log = OUTDIR/'logs/VCF/{sample}/{sample}.AF.snpEff.log'
+        'envs/anVar.yaml'
     threads:
         8
+    log:
+        log = OUTDIR/f'logs/{config["snpEff_reference"]}_db.snpEff.log'
+
     shell:
-        'python scripts/snpEff_db.py rename {input.fvcf} {params.rvcf} {params.ref}; '
-        'snpEff {params.ref} {params.rvcf} > {output.avcf} 2> {log.log}'
+        "python scripts/snpEff_db.py {input.gbk} {params.genome_name} "
+        " -fa {params.fa} -nenv {params.nenv} ; "
+        "snpEff build -genbank -v {params.genome_name}; "
+        "cp -r /nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/data {params.nenv}  "
+
+
+
+
+#
+# rule annotateVars2:
+#     input:
+#         fvcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.vcf'
+#     output: avcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.annotated.vcf',
+#         marker = touch(OUTDIR/'VCF/{sample}/{sample}.AF.snpEff.done')
+#     params:
+#         ref = config['reference'],
+#         rvcf = lambda wildcards: OUTDIR/f'VCF/{wildcards.sample}/{wildcards.sample}.filtered.renamed.vcf',
+#         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.AF.snpEff.qerr',
+#         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.AF.snpEff.qout',
+#         scratch = 6000,
+#         mem = 7700,
+#         time = 1400
+#     conda:
+#         'envs/call_variants.yaml'
+#     log: log = OUTDIR/'logs/VCF/{sample}/{sample}.AF.snpEff.log'
+#     threads:
+#         8
+#     shell:
+#         'python scripts/snpEff_db.py rename {input.fvcf} {params.rvcf} {params.ref}; '
+#         'snpEff {params.ref} {params.rvcf} > {output.avcf} 2> {log.log}'

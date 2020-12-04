@@ -79,8 +79,11 @@ rule findAb:
 rule pileup:
     input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
 
+rule anVar:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
 
-
+rule addGenomeSnpEff:
+    input: OUTDIR/f'VCF/{config["snpEff_reference"]}.snpEff_db.done'
 
 
 rule align:
@@ -115,8 +118,7 @@ rule serotype:
     input: [OUTDIR/f'typing/{sub}/output.tsv' for sub in SAMPLES]
 
 
-rule anVar:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
+
 
 rule anVar2:
     input: [OUTDIR/f'VCF/{sub}/{sub}.AF.snpEff.done' for sub in SAMPLES]

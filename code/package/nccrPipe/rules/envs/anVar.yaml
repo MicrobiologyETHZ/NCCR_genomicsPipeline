@@ -1,4 +1,8 @@
-name: anvar
+# DO NOT CHANGE THIS FILE
+# If you do change this file,
+# This will generate new env in nccrPipe/.snakemake/conda/
+# Figure out which one and add that path to config (snpEff_nenv!
 dependencies:
-  - snpeff >= 5.0
+  - snpeff == 5.0.0
   - python >=3.8
+  - biopython
