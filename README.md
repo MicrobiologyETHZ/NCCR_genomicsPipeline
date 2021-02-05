@@ -24,7 +24,7 @@ The software depends on `conda`, `Python >= 3.8` and `snakemake == 5.22`.
 ```
 git clone https://github.com/MicrobiologyETHZ/NCCR_genomicsPipeline
 cd code/package
-conda env create -f nccrPipe_environment.yml
+conda env create -f nccrPipe_environment.yaml
 conda activate nccrPipe
 pip install -e . 
 

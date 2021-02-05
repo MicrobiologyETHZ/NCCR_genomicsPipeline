@@ -58,6 +58,9 @@ rule annotate:
         [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
 
+rule alignment_qc:
+    input: OUTDIR/f'ref_bams/test/test.bam.stats'
+
 # Compare Genomes
 
 rule nucmer:
@@ -65,7 +68,7 @@ rule nucmer:
 
 
 rule runANI:
-    input: [OUTDIR/f'ANI/plasmid/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
+    input: [OUTDIR/f'ANI/assembly/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
 
 
 rule phylogeny:

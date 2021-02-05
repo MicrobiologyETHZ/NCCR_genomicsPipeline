@@ -31,7 +31,7 @@ rule assemble_wga:
         benchmark:
             OUTDIR/'assembly/{sample}/{sample}.spades.benchmark'
         threads:
-            8
+            16
         shell:
             "spades.py -t 4 --isolate "
             " --pe1-1 {input.fq1} --pe1-2 {input.fq2} "
@@ -106,38 +106,38 @@ rule assembly_cleanup:
         #!/bin/bash
 
         command="
-        if [[ -f "{params.workfolder}/scaffolds.fasta" ]]; then
-            pigz   -p {threads} {params.workfolder}/scaffolds.fasta
+        if [[ -f "{params.workfolder}/{params.sample}/scaffolds.fasta" ]]; then
+            pigz   -p {threads} {params.workfolder}/{params.sample}/scaffolds.fasta
         fi
-        if [[ -f "{params.workfolder}/contigs.fasta" ]]; then
-            pigz  -p {threads} {params.workfolder}/contigs.fasta
+        if [[ -f "{params.workfolder}/{params.sample}/contigs.fasta" ]]; then
+            pigz  -p {threads} {params.workfolder}/{params.sample}/contigs.fasta
         fi
-        if [[ -f "{params.workfolder}/assembly_graph.fastg" ]]; then
-            pigz  -p {threads} {params.workfolder}/assembly_graph.fastg
+        if [[ -f "{params.workfolder}/{params.sample}/assembly_graph.fastg" ]]; then
+            pigz  -p {threads} {params.workfolder}/{params.sample}/assembly_graph.fastg
         fi
-        if [[ -f "{params.workfolder}/assembly_graph_with_scaffolds.gfa" ]]; then
-            pigz  -p {threads} {params.workfolder}/assembly_graph_with_scaffolds.gfa
+        if [[ -f "{params.workfolder}/{params.sample}/assembly_graph_with_scaffolds.gfa" ]]; then
+            pigz  -p {threads} {params.workfolder}/{params.sample}/assembly_graph_with_scaffolds.gfa
         fi
-        if [[ -f "{params.workfolder}/contigs.paths" ]]; then
-            pigz  -p {threads} {params.workfolder}/contigs.paths
+        if [[ -f "{params.workfolder}/{params.sample}/contigs.paths" ]]; then
+            pigz  -p {threads} {params.workfolder}/{params.sample}/contigs.paths
         fi
-        if [[ -f "{params.workfolder}/scaffolds.paths" ]]; then
-            pigz  -p {threads} {params.workfolder}/scaffolds.paths
+        if [[ -f "{params.workfolder}/{params.sample}/scaffolds.paths" ]]; then
+            pigz  -p {threads} {params.workfolder}/{params.sample}/scaffolds.paths
         fi
-        if [[ -f "{params.workfolder}/misc/broken_scaffolds.fasta" ]]; then
-            rm {params.workfolder}/misc/broken_scaffolds.fasta
+        if [[ -f "{params.workfolder}/{params.sample}/misc/broken_scaffolds.fasta" ]]; then
+            rm {params.workfolder}/{params.sample}/misc/broken_scaffolds.fasta
         fi
-        if [[ -f "{params.workfolder}/first_pe_contigs.fasta" ]]; then
-            rm {params.workfolder}/first_pe_contigs.fasta
+        if [[ -f "{params.workfolder}/{params.sample}/first_pe_contigs.fasta" ]]; then
+            rm {params.workfolder}/{params.sample}/first_pe_contigs.fasta
         fi
-        if [[ -f "{params.workfolder}/before_rr.fasta" ]]; then
-            rm {params.workfolder}/before_rr.fasta
+        if [[ -f "{params.workfolder}/{params.sample}/before_rr.fasta" ]]; then
+            rm {params.workfolder}/{params.sample}/before_rr.fasta
         fi
-        python ./scripts/contig_filter.py {params.sample} contigs {params.workfolder}/contigs.fasta.gz {params.workfolder}
-        python ./scripts/contig_filter.py {params.sample} scaffolds {params.workfolder}/scaffolds.fasta.gz {params.workfolder}
-        pigz -f -p {threads} {params.workfolder}/*min*fasta
-        pigz -f -p {threads} {params.workfolder}/*hashes
-        assembly-stats -l 500 -t <(zcat {params.workfolder}/{params.sample}.scaffolds.min500.fasta.gz) > {params.workfolder}/{params.sample}.assembly.stats
+        python ./scripts/contig_filter.py {params.sample} contigs {params.workfolder}/{params.sample}/contigs.fasta.gz {params.workfolder}/{params.sample}
+        python ./scripts/contig_filter.py {params.sample} scaffolds {params.workfolder}/{params.sample}/scaffolds.fasta.gz {params.workfolder}/{params.sample}
+        pigz -f -p {threads} {params.workfolder}/{params.sample}/*min*fasta
+        pigz -f -p {threads} {params.workfolder}/{params.sample}/*hashes
+        assembly-stats -l 500 -t <(zcat {params.workfolder}/{params.sample}/{params.sample}.scaffolds.min500.fasta.gz) > {params.workfolder}/{params.sample}/{params.sample}.assembly.stats
         &> {log.log}
         ";
         eval "$command"

@@ -95,8 +95,8 @@ rule showCoords:
 
 
 rule calculateANI:
-    input: ref = OUTDIR/'{assembly}/{sample1}/scaffolds.fasta',
-         genome = OUTDIR/'{assembly}/{sample2}/scaffolds.fasta'
+    input: ref = OUTDIR/'{assembly}/{sample1}/scaffolds.fasta.gz',
+         genome = OUTDIR/'{assembly}/{sample2}/scaffolds.fasta.gz'
     output:
         aniFile = OUTDIR/'ANI/{assembly}/{sample1}_{sample2}_fastani.out'
     params:

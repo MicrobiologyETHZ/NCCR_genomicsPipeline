@@ -6,12 +6,12 @@ OUTDIR = Path(config['outDir'])
 
 
 rule index:
-    input: '{file}.fasta'
-    output: '{file}.fasta.bwt',
-        marker = touch('{file}.fasta.index.done')
+    input: '{file}.{fasta}'
+    output: '{file}.{fasta}.bwt',
+        marker = touch('{file}.{fasta}.index.done')
     params:
-        qerrfile = '{file}.bwa.qerr',
-        qoutfile = '{file}.bwa.qout',
+        qerrfile = '{file}.{fasta}.bwa.qerr',
+        qoutfile = '{file}.{fasta}.bwa.qout',
         scratch = 6000,
         mem = 7700,
         time = 1400
@@ -59,7 +59,7 @@ rule align_to_self:
         "-l 9 -@ 4 -O bam -o {output.bam} -T {output.bam}.tmp; samtools index {output.bam}"
 
 
-if config['reference'].endswith('.fasta') or config['reference'].endswith('.fasta.gz') or config['reference'].endswith('.fna.gz'):
+if config['reference'].endswith('.fasta') or config['reference'].endswith('.fasta.gz') or config['reference'].endswith('.fna.gz') or config['reference'].endswith('.fna'):
     REFPATH = Path(config['reference']) # todo refactor
 elif config['scaffold'] and config['scaffold'].startswith('min'):
     REFPATH = OUTDIR/f'assembly/{config["reference"]}/{config["reference"]}.scaffolds.{config["scaffold"]}.fasta'
@@ -136,27 +136,27 @@ rule align_to_ref:
         "-l 9 -@ 4 -O bam -o {output.bam} -T {output.bam}.tmp; samtools index {output.bam}"
 
 
+rule alignment_stats:
+    input: OUTDIR/'{bam}/{sample}/{sample}.bam'
+    output: OUTDIR/'{bam}/{sample}/{sample}.bam.stats'
+    params:
+        qerrfile = lambda wildcards: OUTDIR/f'{wildcards.bam}/{wildcards.sample}/{wildcards.sample}.samtools.stats.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'{wildcards.bam}/{wildcards.sample}/{wildcards.sample}.samtools.stats.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    log:
+        log = OUTDIR/'{bam}/{sample}/{sample}.samtools.stats.log',
+    conda:
+        'envs/align.yaml'
+    threads:
+        8
+    shell:
+         "samtools stats {input} > {output}"
 
 
 
 
 
-
-
-#rule align_to_ref:
-#
-# rule gunzip:
-#     input: '{sample}.fasta.gz'
-#     output: '{sample}.fasta'
-#     params:
-#         qerrfile = '{sample}.gzip.qerr',
-#         qoutfile = '{sample}.gzip.qout',
-#         scratch = 6000,
-#         mem = 7700,
-#         time = 1400
-#     threads:
-#         8
-#     shell:
-#         'gunzip {input}'
 
 

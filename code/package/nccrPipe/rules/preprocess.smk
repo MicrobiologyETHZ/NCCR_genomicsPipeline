@@ -1,10 +1,15 @@
 from pathlib import Path
-
+import sys
 
 def getFastq1(wildcards): # todo generalize to other data structures
     search_str = f'*{config["fq_fwd"]}'
     #print(Path(DATADIR).joinpath(wildcards.sample))#.rglob(search_str)))
-    return str(list(Path(DATADIR).joinpath(wildcards.sample).rglob(search_str))[0])
+    try:
+        return str(list(Path(DATADIR).joinpath(wildcards.sample).rglob(search_str))[0])
+    except IndexError:
+        print(Path(DATADIR).joinpath(wildcards.sample))
+        print(search_str)
+        sys.exit(1)
 
 def getFastq2(wildcards):
     search_str = f'*{config["fq_rvr"]}'

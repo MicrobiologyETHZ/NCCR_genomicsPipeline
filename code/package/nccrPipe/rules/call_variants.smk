@@ -84,27 +84,27 @@ rule sampile:
     shell:
         "samtools mpileup -O -s -f {input.scaf}  {input.bam} -o {output.mpile} --output-extra QNAME"
 
-#
-# rule bcf_filter:
-#     input: OUTDIR/'VCF/{sample}/{sample}.vcf',
-#         OUTDIR/'VCF/{sample}/{sample}.mpileup.done'
-#     output: fvcf = OUTDIR/'VCF/{sample}/{sample}.filtered.vcf',
-#         marker = touch(OUTDIR/'VCF/{sample}/{sample}.vcf.done')
-#     params:
-#         qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qerr',
-#         qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qout',
-#         scratch = 6000,
-#         mem = 7700,
-#         time = 1400
-#     log:
-#         log = OUTDIR/'logs/VCF/{sample}.bcf.log'
-#     conda:
-#         'envs/call_variants.yaml'
-#     threads:
-#         8
-#     shell:
-#         "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<100 || DP4[2]<10 || DP4[3]<10 ||  MQ<60' {input} | "
-#         "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} 2> {log.log}"
+# #
+rule bcf_filter:
+    input: vcf = OUTDIR/'VCF/{sample}/{sample}.vcf',
+        m = OUTDIR/'VCF/{sample}/{sample}.mpileup.done'
+    output: fvcf = OUTDIR/'VCF/{sample}/{sample}.filtered.vcf',
+        marker = touch(OUTDIR/'VCF/{sample}/{sample}.vcf.done')
+    params:
+        qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.bcf.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    log:
+        log = OUTDIR/'logs/VCF/{sample}.bcf.log'
+    conda:
+        'envs/call_variants.yaml'
+    threads:
+        8
+    shell:
+        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<100 || DP4[2]<10 || DP4[3]<10 ||  MQ<60' {input.vcf} | "
+        "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} 2> {log.log}"
 
 
 rule bcf_filter2:

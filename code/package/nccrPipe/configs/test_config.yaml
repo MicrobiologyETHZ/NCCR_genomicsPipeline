@@ -1,11 +1,11 @@
 projectName: Test
 
-dataDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/raw
-outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/JN
-sampleFile: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/code/configs/JN_samples.txt
+dataDir: /nfs/home/ansintsova/test_data/raw
+outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/nccr/nccr/genomicspipeline_dev/data
+sampleFile: configs/test_samples.txt
 species: Escherichia_coli
-fq_fwd: _1.fq.gz
-fq_rvr: _2.fq.gz
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
 
 #Preprocessing
 qc: yes
@@ -16,10 +16,10 @@ minlen: 45
 
 merged: false # By default to do not use merge for isolate genome assembly
 
-fastqc: no
+fastqc: after # Options: no, before, after, both
 
 # Align to reference
-reference: ../../../data/processed/ref/LL6.scaffolds.min0.fasta # sample name (ex. LL1) or path to genome assembly
+reference: /nfs/home/ansintsova/test_data/ref/LL6.scaffolds.min0.fasta # sample name (ex. LL1) or path to genome assembly
 scaffold: #min0, min500 if want to use filtered assembly
 
 #
