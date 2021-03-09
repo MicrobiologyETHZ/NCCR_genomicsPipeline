@@ -1,0 +1,40 @@
+ProjectName: Test
+dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/ansintsova/test_data/rnaseq/raw
+outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/ansintsova/test_data/rnaseq/
+sampleFile: configs/rnaseq_samples.txt
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+
+#Preprocessing
+qc: yes
+mink: 11
+trimq: 14 # 37
+mapq: 20
+minlen: 45
+
+merged: false # By default to do not use merge for isolate genome assembly
+fastqc: no # Options: no, before, after, both
+
+
+# STAR
+refGenome: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/ath/GCF_000001735.4_TAIR10.1_genomic.fna
+refAnn: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/ath/GCF_000001735.4_TAIR10.1_genomic.edited2.gtf
+genomeDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/ath/ncbi_star_index
+overhang: 149
+maxIntron: 50000
+
+# featureCounts
+strand: 0
+attribute: gene_id
+
+# kallisto
+transcriptome: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/ath/AtRTD2_19April2016.fa
+kallistoIdx: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/ath/AtRTD2_19April2016.idx
+
+
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+

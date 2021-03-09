@@ -39,6 +39,13 @@ rule assemble_wga:
             "-o {params.outdir} &> {log.log} "
 
 
+
+"""
+
+
+I do not like this, test differnt tool for plasmid assembly\mobSUITE
+
+"""
 rule assemble_plasmid:
         input:
             fq1 = OUTDIR/READ_DIR/'{sample}/{sample}.1.fq.gz',
@@ -144,9 +151,32 @@ rule assembly_cleanup:
 #         '''
 
 
-
-
-
+rule unicycler_short:
+        input:
+            fq1 = OUTDIR/'clean_reads/{sample}/{sample}.1.fq.gz',
+            fq2 = OUTDIR/'clean_reads/{sample}/{sample}.2.fq.gz',
+            s = OUTDIR/READ_DIR/'{sample}/{sample}.s.fq.gz',
+        output:
+            marker = touch(OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/{sample}.unicycler.done')
+        params:
+            outdir = lambda wildcards: OUTDIR/f'unicycler/{config["unimode"]}/{wildcards.sample}',
+            qerrfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config["unimode"]}.qerr',
+            qoutfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config["unimode"]}.qout',
+            threads = 24,
+            mode = config["unimode"],
+            scratch = 6000,
+            mem = 7700,
+            time = 1400
+        log:
+            log = OUTDIR/'logs/unicycler/{sample}.unicycler.log',
+        conda:
+            'envs/unicycler.yaml'
+        threads:
+            32
+        shell:
+            "unicycler -1 {input.fq1} -2 {input.fq2} "
+            "-s {input.s} --mode {params.mode} "
+            "-t {params.threads} -o {params.outdir} "
 
 
 

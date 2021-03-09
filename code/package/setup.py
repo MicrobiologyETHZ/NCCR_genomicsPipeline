@@ -9,6 +9,8 @@ setup(
     license = "LICENSE",
     keywords = "nccrPipe",
     url = "https://github.com/MicrobiologyETHZ/NCCR_genomicsPipeline",
+    install_requires=[
+        'click'],
     packages=['nccrPipe'],
     entry_points = {
         'console_scripts': ['nccrPipe=nccrPipe.main:main'],

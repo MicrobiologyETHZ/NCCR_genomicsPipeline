@@ -5,3 +5,4 @@ dependencies:
   - fastani
   - phylophlan
   - ariba=2.14
+  - iqtree=2.0.3

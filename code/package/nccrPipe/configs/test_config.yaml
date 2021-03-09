@@ -45,9 +45,21 @@ cg:  #default should be 1, might need lower one for highly divergent things
 # ariba
 aribaDB: /science/ansintsova/esbl_strains/db/card/out.card.prepareref
 
+#fetchMGs
+pathfetchMG: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/ansintsova/fetchMGs
+
+#MASH
+
+refseqMSH: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/mkmherzog/hfd/data/ref/refseq.genomes.k21s1000.msh
+
+#Unicycler
+unimode: normal
+
 
 # Standard parameters. Dont change these!!!
 adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
 phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
 bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
 bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+
+

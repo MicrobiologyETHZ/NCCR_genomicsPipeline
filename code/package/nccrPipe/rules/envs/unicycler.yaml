@@ -1,0 +1,9 @@
+channels:
+  - bioconda
+dependencies:
+  #- biopython>1.7
+  - unicycler==0.4.8
+  - samtools=1.11
+  #- assembly-stats
+
+

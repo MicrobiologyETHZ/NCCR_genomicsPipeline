@@ -1,4 +1,3 @@
-#from pathlib import Path
 from scripts.get_vars import *
 import sys
 
@@ -17,8 +16,18 @@ include: "rules/annotate.smk"
 include: "rules/compare_genomes.smk"
 include: "rules/call_variants.smk"
 include: "rules/typing.smk"
+include: "rules/profile.smk"
 
+"""
+Preprocessing:
 
+In the config file, can specify whether to run FastQC before preprocessing, after, both or not at all.
+By default, will only run after preprocessing.
+
+Preprocessing:
+    - 
+
+"""
 if not config['fastqc']:
     rule preprocess:
         input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
@@ -44,6 +53,8 @@ rule merge_fastq:
 rule assemble:
     input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
 
+rule unicycle:
+    input:[OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{sample}.unicycler.done' for sample in SAMPLES]
 
 rule quastCheck:
     input: OUTDIR/'quast/assembly_qc.quast_all.done'
@@ -71,11 +82,22 @@ rule runANI:
     input: [OUTDIR/f'ANI/assembly/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
 
 
+rule motus:
+    input: [OUTDIR/f'motus/{sample}/{sample}.motus' for sample in SAMPLES]
+
+rule fetchMG:
+    input: [OUTDIR/f'fetchMG/{sample}/fetchMG.done' for sample in SAMPLES]
+
+rule whatisit:
+    input: [OUTDIR/f'mash/{sample}/{sample}.distances.tab' for sample in SAMPLES]
+
 rule phylogeny:
     input: OUTDIR/f'phylophlan/{config["projectName"]}/output_isolates/RAxML_bestTree.input_isolates.tre'
 
 rule findAb:
     input: OUTDIR/f'ariba/summary.done'
+
+
 
 
 #_________________________________________________
@@ -121,8 +143,6 @@ rule serotype:
     input: [OUTDIR/f'typing/{sub}/output.tsv' for sub in SAMPLES]
 
 
-
-
 rule anVar2:
     input: [OUTDIR/f'VCF/{sub}/{sub}.AF.snpEff.done' for sub in SAMPLES]
 
@@ -142,3 +162,12 @@ rule pangenome:
 #         8
 #     shell:
 #         'gzip {input}'
+
+
+# 2021-02-24 Trees for algal metagenomes
+
+rule algal_tree:
+    #input: '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/piel/padhi/data/fresh_tree/fresh.bac120.user_msa.fasta.iqtree'
+    #input: '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/piel/padhi/data/trees/fresh_tree/fresh.bac120.user_msa.fasta.iqtree'
+    input: '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/piel/padhi/data/trees/sed_tree/sed.bac120.user_msa.fasta.iqtree', '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/piel/padhi/data/trees/2017_2020_tree/2017_2020.bac120.user_msa.fasta.iqtree'
+

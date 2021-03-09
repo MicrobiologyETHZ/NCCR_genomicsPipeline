@@ -265,6 +265,30 @@ rule aribaSummary:
         "{params.files}  &> {log.log} "
 
 
+
+rule iqtree:
+    input: '{msa_file}'
+    output: '{msa_file}.iqtree'
+    params:
+        qerrfile = lambda wildcards: f'{wildcards.msa_file}.qerr',
+        qoutfile = lambda wildcards: f'{wildcards.msa_file}.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400,
+    conda:
+        'envs/compare_genomes.yaml'
+    log:
+        log = '{msa_file}.log'
+    threads:
+        32
+    shell:
+       # "iqtree -s {input} -mset WAG,LG,DCmut -T AUTO -B 1000"
+        "iqtree -s {input} -m LG+F+R  -T AUTO -B 1000"
+
+
+
+
+
 # under construction
 rule daisy:
     input: r1 = OUTDIR/"clean_reads/{sample}/{sample}.1.fq.gz",
@@ -294,6 +318,9 @@ rule daisy:
         "-r2 {input.r2} -ar {input.ac} -dr {input.dn} "
         "-a '{params.a}' -d '{params.d}' "
         "-eva -del -od  {params.od} &> {log.log} "
+
+
+
 
 
 #
