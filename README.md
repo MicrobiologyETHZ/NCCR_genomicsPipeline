@@ -23,30 +23,149 @@ The software depends on `conda`, `Python >= 3.8` and `snakemake == 5.22`.
 
 ```
 git clone https://github.com/MicrobiologyETHZ/NCCR_genomicsPipeline
-cd code/package
+cd NCCR_genomicsPipeline/code/package
 conda env create -f nccrPipe_environment.yaml
+# mamba env create -f nccrPipe_environment.yaml
 conda activate nccrPipe
 pip install -e . 
 
 ```
 
-### Running
+### Running the pipeline
 
 ```
-nccrPipe -c <config_file> -a <analysis> [-np]
+nccrPipe COMMAND [OPTIONS]
 
-    -c Path to config file (default=test config file)
-    -a Analysis to run, ex. assemble, call_vars (under development)
-    -np Dry run. Will run snakemake with -np flag
+Commands:
+  isolate
+  rnaseq
+  unlock
+
+Options:
+  -c, --config TEXT Path to configuration file 
+  -m, --method TEXT Method/Analysis to run
+  --dry             Show commands without running them
+  --local           Run locally/without submitting to the cluster
+  --help            Show the help message
+
 ```
 
-To start a new project, run 
+### Running RNAseq pipeline
+
+- To run STAR/featureCounts pipeline run:
 
 ```
-nccrPipe -c <config_file> -a create_config
+nccrPipe rnaseq -c <configfile> -m star
+
 ```
-This will copy the default version of config to `<config_file>`. Right now this file needs to be manually edited to input relevant info about the project.
-After the `config_file` is setup, run the analysis. For analysis options, see below. 
+
+To see what jobs are going to be submitted to the cluster add `--dry` flag. To run pipeline without submitting jobs to the cluster add `--local`` flag.
+
+
+- To run kallisto pipeline run:
+
+```
+
+nccrPipe rnaseq -c <configfile> -m kallisto
+
+```
+
+### Running isolate pipeline
+
+UNDER CONSTRUCTION
+
+
+### RNAseq Config File:
+
+- YAML file with following mandatory fields:
+
+```
+ProjectName: Test
+dataDir: path to data directory (see data structure below)
+outDir: path to output directory
+sampleFile: file with sample names (see example below)
+fq_fwd: _1.fq.gz # forward reads fastq suffix
+fq_rvr: _2.fq.gz # reverse reads fastq suffix
+
+#Preprocessing
+qc: yes
+mink: 11
+trimq: 14 # 37
+mapq: 20
+minlen: 45
+
+merged: false # By default to do not use merge for isolate genome assembly
+fastqc: no # Options: no, before, after, both
+
+
+# STAR
+refGenome: reference_genome.fna # Uncompressed (Did not test with compressed file)
+refAnn: reference_annotation.gtf # Important to have .gtf not a .gff
+genomeDir: directory to output genome index
+overhang: 149 # ReadLength - 1
+maxIntron: 50000 # Max size of intron (Depends on organism) 
+
+
+# featureCounts
+strand: 0 # Strandiness of the RNASeq, can be 0,1,2
+attribute: gene_id # Should work, if using .gtf file 
+
+
+# kallisto
+transcriptome: transcriptome.fa #Uncompressed
+kallistoIdx: transcriptome_index_file.idx
+
+
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+
+```
+
+### Example Data Structure 
+
+```
+|--data/
+     |--samples.txt   
+     |--raw/
+     |   |--Sample1
+     |   |      |--Sample1_abcd_R1.fq.gz
+     |   |      |--Sample1_abcd_R2.fq.gz
+     |   |
+     |   |--Sample2
+     |          |--Sample1_efgh_R1.fq.gz
+     |          |--Sample2_efgh_R2.fq.gz 
+     |   
+     |--processed/     
+
+```
+### Example samples.txt:
+```
+Sample1
+Sample2
+```
+
+### Example config
+
+```
+ProjectName: Example Config
+dataDir: data/raw
+outDir: data/processed
+sampleFile: data/samples.txt
+fq_fwd: _R1.fq.gz 
+fq_rvr: _R2.fq.gz 
+
+...
+
+```
+- Test RNASeq config is `code/package/nccrPipe/configs/rnaseq_config.yaml`
+- Test samples file is `code/package/nccrPipe/configs/rnaseq_config.yaml`
+- RNAseq snakemake rules are in `code/package/nccrPipe/rnaseq_rules`
+
+----------------------------------------------------------
+# UNDER CONSTRUCTION 
 
 ### Analysis Options:
 
@@ -79,18 +198,7 @@ All of these need to be tested and documented
 
 Default data structure: 
 
-```
-|-- project/
-    |--code/
-    |  |--configs/
-    |     |--config.yaml
-    |     |--samples.txt 
-    | 
-    |--data/
-       |--raw/
-       |--processed/     
 
-```
 By default, data will be in `data/raw` and the output directory `data/processed`
 
 ```

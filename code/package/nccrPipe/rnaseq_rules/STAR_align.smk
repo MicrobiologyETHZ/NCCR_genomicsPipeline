@@ -87,6 +87,5 @@ rule featureCounts:
         "-a {params.annotation} -o {output} " 
         "-g {params.attribute} {input.bam} -s {params.strand} &> {log}"
 
-#TETSETE
-# testtest test
+
 

@@ -17,7 +17,7 @@ def main():
 #RNAseq
 @main.command()
 @click.option('--config', '-c', default='configs/rnaseq_config.yaml', help='Configuration File')
-@click.option('--method', '-m', default='star', help='Configuration File')
+@click.option('--method', '-m', default='star', help='star (default) or kallisto')
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 def rnaseq(config, method, local, dry):
