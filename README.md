@@ -6,7 +6,12 @@
 Pipeline for analysis of isolate genomes. 
 
 ### Steps Currently Included:
+RNASeq:
 
+- Align with STAR/count with featureCounts
+- Align and count with kallisto
+
+Isolate:
 - QC
 - Isolate Genome Assembly 
 - Gene calling and annotation
@@ -59,7 +64,7 @@ nccrPipe rnaseq -c <configfile> -m star
 
 ```
 
-To see what jobs are going to be submitted to the cluster add `--dry` flag. To run pipeline without submitting jobs to the cluster add `--local`` flag.
+To see what jobs are going to be submitted to the cluster add `--dry` flag. To run pipeline without submitting jobs to the cluster add `--local` flag.
 
 
 - To run kallisto pipeline run:
@@ -130,11 +135,11 @@ bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/Sequ
 |--data/
      |--samples.txt   
      |--raw/
-     |   |--Sample1
+     |   |--Sample1/
      |   |      |--Sample1_abcd_R1.fq.gz
      |   |      |--Sample1_abcd_R2.fq.gz
      |   |
-     |   |--Sample2
+     |   |--Sample2/
      |          |--Sample1_efgh_R1.fq.gz
      |          |--Sample2_efgh_R2.fq.gz 
      |   
@@ -150,7 +155,7 @@ Sample2
 ### Example config
 
 ```
-ProjectName: Example Config
+ProjectName: Example_Project
 dataDir: data/raw
 outDir: data/processed
 sampleFile: data/samples.txt
@@ -160,8 +165,8 @@ fq_rvr: _R2.fq.gz
 ...
 
 ```
-- Test RNASeq config is `code/package/nccrPipe/configs/rnaseq_config.yaml`
-- Test samples file is `code/package/nccrPipe/configs/rnaseq_config.yaml`
+- Example RNASeq config is `code/package/nccrPipe/configs/rnaseq_config.yaml`
+- Example samples file is `code/package/nccrPipe/configs/rnaseq_config.yaml`
 - RNAseq snakemake rules are in `code/package/nccrPipe/rnaseq_rules`
 
 ----------------------------------------------------------
