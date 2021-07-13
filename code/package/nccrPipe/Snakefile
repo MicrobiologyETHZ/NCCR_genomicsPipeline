@@ -1,6 +1,8 @@
 from scripts.get_vars import *
 import sys
 
+configfile: "configs/basic_config.yaml"
+
 DATADIR = Path(config['dataDir'])
 OUTDIR = Path(config['outDir'])
 SAMPLEFILE = Path(config['sampleFile'])
@@ -17,6 +19,7 @@ include: "rules/compare_genomes.smk"
 include: "rules/call_variants.smk"
 include: "rules/typing.smk"
 include: "rules/profile.smk"
+include: "rules/count.smk"
 
 """
 Preprocessing:
@@ -59,10 +62,18 @@ rule unicycle:
 rule quastCheck:
     input: OUTDIR/'quast/assembly_qc.quast_all.done'
 
-rule plasmid:
-    input: [OUTDIR/f'plasmid/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES],
-        [OUTDIR/f'plasmid/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
-        [OUTDIR/f'plasmid/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+rule quastCheckUni:
+    input: OUTDIR/f'unicycler/{config["unimode"]}/unicycler_assembly_qc.quast_all.done'
+
+
+rule test_genelen:
+    input: "/science/ansintsova/bioinfocore/aligner_test/data/assembly/Sal/Sal.scaffolds.min500.fasta.gz.genelen.done"
+
+#
+# rule plasmid:
+#     input: [OUTDIR/f'plasmid/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES],
+#         [OUTDIR/f'plasmid/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
+#         [OUTDIR/f'plasmid/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
 rule annotate:
     input: [OUTDIR/f'assembly/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
@@ -70,8 +81,10 @@ rule annotate:
 
 
 rule alignment_qc:
-    input: OUTDIR/f'ref_bams/test/test.bam.stats'
+    input: [OUTDIR/f'ref_bams/{sample}/{sample}.bam.stats' for sample in SAMPLES]
 
+rule count_htseq:
+    input: [OUTDIR/f'counts/{sample}/{sample}.tsv' for sample in SAMPLES]
 # Compare Genomes
 
 rule nucmer:
@@ -80,7 +93,6 @@ rule nucmer:
 
 rule runANI:
     input: [OUTDIR/f'ANI/assembly/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
-
 
 rule motus:
     input: [OUTDIR/f'motus/{sample}/{sample}.motus' for sample in SAMPLES]
@@ -93,6 +105,7 @@ rule whatisit:
 
 rule phylogeny:
     input: OUTDIR/f'phylophlan/{config["projectName"]}/output_isolates/RAxML_bestTree.input_isolates.tre'
+
 
 rule findAb:
     input: OUTDIR/f'ariba/summary.done'
@@ -118,12 +131,12 @@ rule align_with_ref:
     input: [OUTDIR/f'ref_bams/{sub}/{sub}.refbwa.done' for sub in SAMPLES]
 
 
-rule call_vars:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.vcf.done' for sub in SAMPLES]
+# rule call_vars:
+#     input: [OUTDIR/f'VCF/{sub}/{sub}.vcf.done' for sub in SAMPLES]
 
-rule call_vars2:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.AF.vcf.done' for sub in SAMPLES],
-       # [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+rule call_variants:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.isolate.vcf.done' for sub in SAMPLES]
+
 
 rule call_vars3:
     input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]

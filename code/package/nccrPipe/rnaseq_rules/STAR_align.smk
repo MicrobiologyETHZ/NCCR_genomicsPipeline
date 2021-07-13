@@ -64,6 +64,26 @@ rule STAR_align:
            "--quantMode GeneCounts &> {log} "
 
 
+rule satCurve:
+    input: bam = OUTDIR/'bam/{sample}/{sample}_Aligned.sortedByCoord.out.bam'
+    output: csv = OUTDIR/'bam/{sample}/{sample}_Aligned.sortedByCoord.out.satCurve.csv'
+    params:
+        gff = config['refGff'],
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}.satCurve.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}.satCurve.qout',
+        threads = 8,
+        scratch = 6000,
+        mem = 8000,
+        time = 1400
+    conda:
+        'envs/satCurve.yaml'
+    log: OUTDIR/'logs/{sample}.satCurve.log'
+    threads:
+        8
+    shell:
+        "python ./scripts/saturation_curve.py {input.bam} {params.gff}"
+
+
 rule featureCounts:
     input: bam = OUTDIR/'bam/{sample}/{sample}_Aligned.sortedByCoord.out.bam',
     output: OUTDIR/'counts/{sample}/{sample}.count.txt'

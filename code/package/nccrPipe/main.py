@@ -31,36 +31,40 @@ def rnaseq(config, method, local, dry):
 
 # Isolate
 @main.command()
-@click.option('--config', '-c', default='configs/test_config.yaml', help='Configuration File')
-@click.option('--method', '-m', default='star', help='Configuration File')
+@click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
+@click.option('--method', '-m', default='call_variants', help='Workflow to run')
 @click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def isolate(config, method, local, dry):
+def isolate(config, method, local, dry, no_conda):
     click.echo("Running Genomics Pipeline")
     click.echo(f"Config file: {config}")
     #click.echo("Samples found: ")
     click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, method, smk_file, dry, local)
+    cmd = snakemake_cmd(config, method, smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
 
 
 @main.command()
-@click.option('--config', '-c', default='configs/test_config.yaml', help='Configuration File')
+@click.option('--config', '-c', default='configs/basic_config.yaml', help='Unlock working directory if snakemake failed')
 def unlock(config):
     cmd = shlex.split(f'snakemake --configfile {config} -j 1 --unlock ')
     wdPath = Path(__file__).parent.absolute()
     subprocess.check_call(cmd, cwd=wdPath)
 
 
-def snakemake_cmd(config, analysis, smk_file, dry, local):
+def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False):
     if dry:
         cmd = shlex.split(f'snakemake -s {smk_file} --configfile {config} -np {analysis} ')
     elif local:
         cmd = shlex.split(f'snakemake -s {smk_file} --configfile {config} -j 1 {analysis} ')
     else:
         rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
-        part1 = shlex.split(f'snakemake --configfile {config} -s {smk_file} --use-conda -k --cluster ')
+        if no_conda:
+            part1 = shlex.split(f'snakemake --configfile {config} -s {smk_file} -k --cluster ')
+        else:
+            part1 = shlex.split(f'snakemake --configfile {config} -s {smk_file} --use-conda -k --cluster ')
         part2 = shlex.split(f'{rstring}')
         part3 = shlex.split(f' -p -j 6 --max-jobs-per-second 1 {analysis}')
         cmd = part1 + part2 + part3
@@ -70,7 +74,6 @@ def snakemake_cmd(config, analysis, smk_file, dry, local):
 
 if __name__ == "__main__":
     main()
-
 
 #
 # def parse_args():

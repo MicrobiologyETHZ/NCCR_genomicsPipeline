@@ -2,8 +2,8 @@ channels:
   - bioconda
 dependencies:
   - spades>=3.14
-  - biopython>1.7
-  - unicycler>=0.4.8
-  - assembly-stats
+  - biopython=1.79
+
+
 
 

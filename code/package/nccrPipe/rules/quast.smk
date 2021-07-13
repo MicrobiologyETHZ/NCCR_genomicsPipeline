@@ -69,3 +69,23 @@ rule run_quast_all:
          '-o {params.outDir} '
 
 
+
+rule run_quast_unicylcer:
+    input: [OUTDIR/f'unicycler/{config["unimode"]}'/f'{sample}/assembly.fasta' for sample in SUBSAMPLES]
+    output:
+        touch(OUTDIR/f'unicycler/{config["unimode"]}/unicycler_assembly_qc.quast_all.done')
+        #OUTDIR/'quast/report.txt'
+    params:
+        outDir = OUTDIR/f'unicycler/{config["unimode"]}',
+        qerrfile = OUTDIR/'quast/unicycler.assembly.quast.qerr',
+        qoutfile = OUTDIR/'quast/unicycler.assemlby.quast.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    threads:
+        4
+    conda:
+        'envs/quast.yaml'
+    shell:
+         'quast.py {input} '
+         '-o {params.outDir} '

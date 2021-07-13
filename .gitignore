@@ -419,5 +419,4 @@ buildNumber.properties
 .snakemake/
 
 # added by Anna for general purposes :)
-
-*data*
+/test_data/

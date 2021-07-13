@@ -61,6 +61,7 @@ rule align_to_self:
 
 if config['reference'].endswith('.fasta') or config['reference'].endswith('.fasta.gz') or config['reference'].endswith('.fna.gz') or config['reference'].endswith('.fna'):
     REFPATH = Path(config['reference']) # todo refactor
+
 elif config['scaffold'] and config['scaffold'].startswith('min'):
     REFPATH = OUTDIR/f'assembly/{config["reference"]}/{config["reference"]}.scaffolds.{config["scaffold"]}.fasta'
 
@@ -80,6 +81,7 @@ elif config['scaffold'] and config['scaffold'].startswith('min'):
 else:
     REFPATH = OUTDIR/f'assembly/{config["reference"]}/scaffolds.fasta'
 
+print(REFPATH)
 
 # rule indexFiltered:
 #     input: '{sample}.scaffolds.min0.fasta.gz'

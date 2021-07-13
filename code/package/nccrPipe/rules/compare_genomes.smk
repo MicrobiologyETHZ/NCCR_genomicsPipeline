@@ -285,42 +285,42 @@ rule iqtree:
        # "iqtree -s {input} -mset WAG,LG,DCmut -T AUTO -B 1000"
         "iqtree -s {input} -m LG+F+R  -T AUTO -B 1000"
 
-
-
-
-
-# under construction
-rule daisy:
-    input: r1 = OUTDIR/"clean_reads/{sample}/{sample}.1.fq.gz",
-        r2 = OUTDIR/"clean_reads/{sample}/{sample}.2.fq.gz",
-        dn = OUTDIR/"assembly/LL23/LL23.scaffolds.min0.fasta",
-        ac = OUTDIR/"assembly/{sample}/{sample}.scaffolds.min0.fasta"
-    output:
-        marker = touch(OUTDIR/"daisy/{sample}.daisy.done")
+rule calculat_genlen:
+    input: '{assembly}'
+    output: touch('{assembly}.genelen.done')
     params:
-        od = OUTDIR/"daisy",
-        qerrfile = lambda wildcards: OUTDIR/f'logs/daisy/{wildcards.sample}.daisy.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/daisy/{wildcards.sample}.daisy.qout',
+        qerrfile = '{assembly}.genelen.done.qerr',
+        qoutfile = '{assembly}.genelen.done.qout',
+        diamondDB = '/nfs/cds/Databases/DIAMOND/nr',
         scratch = 6000,
         mem = 7700,
         time = 1400,
-        root = "/nfs/home/ansintsova/daisy",
-        a = "{sample}",
-        d = "LL23"
     conda:
-        'envs/daisy.yaml'
+        'envs/annotate.yaml'
     log:
-        log = OUTDIR/'logs/daisy/{sample}.daisy.log',
+        log = '{assembly}.log'
     threads:
         16
     shell:
-        "python {params.root}/daisy.py -r1 {input.r1} "
-        "-r2 {input.r2} -ar {input.ac} -dr {input.dn} "
-        "-a '{params.a}' -d '{params.d}' "
-        "-eva -del -od  {params.od} &> {log.log} "
-
-
-
+        "python ./scripts/genlen.py {input} --blast --db {params.diamondDB} "
+#
+# rule orthoFinder:
+#     input: config['orthoFinderData']
+#     output: touch(OUTDIR/'orthoFinder.done')
+#     params:
+#         qerrfile = OUTDIR/'logs/orthofinder.qerr',
+#         qoutfile = OUTDIR/'logs/orthofinder.qout',
+#         scratch = 6000,
+#         mem = 7700,
+#         time = 1400,
+#     conda:
+#         'envs/orthoFinder.yaml'
+#     log:
+#         log = OUTDIR/'logs/orthofinder.log'
+#     threads:
+#         16
+#     shell:
+#         "orthofinder -f {input}"
 
 
 #

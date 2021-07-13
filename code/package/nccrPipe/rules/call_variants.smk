@@ -59,7 +59,7 @@ rule bcf_call:
     threads:
         32
     shell:
-        "bcftools mpileup -Ou -f {input.scaf}  {input.bam} | "
+        "bcftools mpileup -Ou -f -q30 -d3000 {input.scaf}  {input.bam} | " 
         "bcftools call -mv -o {output.vcf} 2> {log.log}"
 
 
@@ -107,21 +107,21 @@ rule bcf_filter:
         "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} 2> {log.log}"
 
 
-rule bcf_filter2:
+rule bcf_filter_isolate:
     input: OUTDIR/'VCF/{sample}/{sample}.vcf',
 
-    output: fvcf = OUTDIR/'VCF/{sample}/{sample}.AF.filtered.vcf',
-        marker = touch(OUTDIR/'VCF/{sample}/{sample}.AF.vcf.done')
+    output: fvcf = OUTDIR/'VCF/{sample}/{sample}.isolate.filtered.vcf',
+        marker = touch(OUTDIR/'VCF/{sample}/{sample}.isolate.vcf.done')
     params:
-        qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.AF.bcf.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.AF.bcf.qout',
+        qerrfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.isolate.bcf.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/VCF/{wildcards.sample}/{wildcards.sample}.isolate.bcf.qout',
         scratch = 6000,
         mem = 7700,
         time = 1400
     conda:
         'envs/call_variants.yaml'
     log:
-        log = OUTDIR/'logs/VCF/{sample}.AF.bcf.log'
+        log = OUTDIR/'logs/VCF/{sample}.isolate.bcf.log'
     threads:
         8
     shell:

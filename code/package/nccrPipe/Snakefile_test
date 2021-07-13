@@ -1,0 +1,93 @@
+from pathlib import Path
+
+# 18.05.2021. Testing Spades params on bad genome assemblies for MKMHerzog HFD Study
+
+READDIR = Path('/nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/mkmherzog/hfd/scratch/clean_reads')
+OUTDIR = Path('/nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/mkmherzog/hfd/scratch/test_spades')
+SAMPLES = ['Z5991', 'Z6022', 'Z5781', 'Z5871']
+
+
+rule unicycle_test:
+    input:[OUTDIR/f'unicycler/normal/{sample}/{sample}.unicycler.done' for sample in SAMPLES]
+
+rule spades_test:
+    input:[OUTDIR/f'assembly/{sample}/scaffolds.fasta' for sample in SAMPLES]
+
+
+rule spades_careful:
+        input:
+            fq1 = OUTDIR/READDIR/'{sample}/{sample}.1.fq.gz',
+            fq2 = OUTDIR/READDIR/'{sample}/{sample}.2.fq.gz',
+            s = OUTDIR/READDIR/'{sample}/{sample}.s.fq.gz',
+        output:
+            marker = touch(OUTDIR/'assembly/{sample}/{sample}.spades.done'),
+            scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
+            contigs = OUTDIR/'assembly/{sample}/contigs.fasta'
+        params:
+            outdir = lambda wildcards: OUTDIR/f'assembly/{wildcards.sample}',
+            qerrfile = lambda wildcards: OUTDIR/f'logs/assembly/{wildcards.sample}.spades.qerr',
+            qoutfile = lambda wildcards: OUTDIR/f'logs/assembly/{wildcards.sample}.spades.qout',
+            scratch = 6000,
+            mem = 7700,
+            time = 1400
+        log:
+            log = OUTDIR/'logs/assembly/{sample}.spades.log',
+        conda:
+            'rules/envs/assemble.yaml'
+        benchmark:
+            OUTDIR/'assembly/{sample}/{sample}.spades.benchmark'
+        threads:
+            16
+        shell:
+            "spades.py -t 16 --careful --only-assembler --cov-cutoff auto"
+            " --pe1-1 {input.fq1} --pe1-2 {input.fq2} "
+            "--pe1-s {input.s} "
+            "-o {params.outdir} &> {log.log} "
+
+
+rule unicycler:
+        input:
+            fq1 = READDIR/'{sample}/{sample}.1.fq.gz',
+            fq2 = READDIR/'{sample}/{sample}.2.fq.gz',
+            s = READDIR/'{sample}/{sample}.s.fq.gz',
+        output:
+            marker = touch(OUTDIR/f'unicycler/normal'/'{sample}/{sample}.unicycler.done')
+        params:
+            outdir = lambda wildcards: OUTDIR/f'unicycler/normal/{wildcards.sample}',
+            qerrfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.qerr',
+            qoutfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.qout',
+            threads = 24,
+            mode = 'normal',
+            scratch = 6000,
+            mem = 7700,
+            time = 1400
+        log:
+            log = OUTDIR/'logs/unicycler/{sample}.unicycler.log',
+        conda:
+            'rules/envs/unicycler.yaml'
+        threads:
+            16
+        shell:
+            "unicycler -1 {input.fq1} -2 {input.fq2} "
+            "-s {input.s} --mode {params.mode} "
+            "-t 16 -o {params.outdir} --no_correct --no_pilon"
+
+rule run_test_quast:
+    input: [f for f in Path(OUTDIR/f'comp_assemblies').iterdir()]
+    output:
+        touch(OUTDIR/'quast/assembly_qc.quast_all.done')
+        #OUTDIR/'quast/report.txt'
+    params:
+        outDir = OUTDIR/'quast/assembly_qc',
+        qerrfile = OUTDIR/'quast/assembly.quast.qerr',
+        qoutfile = OUTDIR/'quast/assemlby.quast.qout',
+        scratch = 6000,
+        mem = 7700,
+        time = 1400
+    threads:
+        4
+    conda:
+        'rules/envs/quast.yaml'
+    shell:
+         'quast.py {input} '
+         '-o {params.outDir} '

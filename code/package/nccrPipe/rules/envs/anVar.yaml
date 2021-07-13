@@ -5,4 +5,4 @@
 dependencies:
   - snpeff == 5.0.0
   - python >=3.8
-  - biopython
+  - biopython=1.79

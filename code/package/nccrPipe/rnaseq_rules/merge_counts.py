@@ -6,18 +6,18 @@ from pathlib import Path
 
 def parse_config():
 
-
     return None
+
 
 def merge_featureCounts(outdir, samples):
     pd_files = [Path(outdir) / f'{sample}/{sample}.count.txt' for sample in samples]
-    pd_list =[]
+    pd_list = []
     for f in pd_files:
         df = pd.read_table(f, skiprows=[0], index_col=0).iloc[:,[4,5]]
-        print(df)
         df.columns = ["Length", f.stem.split(".")[0]]
         pd_list.append(df)
-    return pd.concat(pd_list, axis=1)
+    fdf = pd.concat(pd_list, axis=1)
+    return fdf.loc[:, ~fdf.columns.duplicated()]
 
 
 def merge_STARCounts(outdir, samples, strand=0):
@@ -36,6 +36,10 @@ def merge_kallistoCounts(outdir, samples):
     return df.loc[:, ~df.columns.duplicated()]
 
 if __name__ == "__main__":
-    samples = ['R1', 'R2']
-    outdir = 'test'
-    print(merge_featureCounts(outdir, samples))
+    samples = [f'R{i}' for i in range(1,121)]
+    outdirFC = '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/vorholt/akeppler/rnaseq/scratch/counts'
+
+    #outdirSTAR = '/nfs/nas22/fs2202/biol_micro_bioinf_nccr/vorholt/akeppler/rnaseq/scratch/bam/'
+    #outdirK = ''
+    fdf = merge_featureCounts(outdirFC, samples)
+    fdf.to_csv(Path(outdirFC)/'R1_R120_featureCounts.csv')

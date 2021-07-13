@@ -6,21 +6,21 @@
 Pipeline for analysis of isolate genomes. 
 
 ### Steps Currently Included:
-RNASeq:
-
-- Align with STAR/count with featureCounts
-- Align and count with kallisto
 
 Isolate:
-- QC
+
+- Preprocessing
 - Isolate Genome Assembly 
 - Gene calling and annotation
 - Mapping back to assembly or to reference genome
 - Variant calling and annotation
 - ANI calculation
 - Phylogenetics with PhyloPhlAn
-- Pangenome analysis with panX
 
+(eu)RNASeq:
+
+- Align with STAR/count with featureCounts
+- Align and count with kallisto
 
 ### Installation
 
@@ -54,6 +54,80 @@ Options:
   --help            Show the help message
 
 ```
+
+### Running variant calling pipeline:
+
+#### 1. Testing the installation.
+
+Run ```nccrPipe isolate --dry```. This by default will do a dry run of variant calling pipeline on the test dataset. 
+Run ```nccrPipe isolate ``` This will run the variant calling pipeline on the test dataset
+Use `--local` if you don't the jobs to be submitted to queuing system. 
+
+
+#### 2. Creating a config file and sample file
+
+To run the pipeline you need to provide a `yaml` config file. Example config file for sufficient for variant calling is shown below.
+
+```yaml
+projectName: Test_Variant_Calling
+# dataDir: directory with raw sequencing files, files for each sample should be stored in a subdirectory 
+dataDir: test_data/varcall_test_data/raw
+# outDir: output directory
+outDir: test_data/varcall_test_data/output
+# sampleFile: text file listing samples to be analysed
+sampleFile: test_data/varcall_test_data/test_samples.txt
+# forward and reverse fastq suffixes
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
+
+# Preprocessing 
+qc: yes # yes to perform preprocessing, no to skip
+
+# BBMap paramerters
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+
+merged: false # By default do not use merge for isolate genome assembly
+fastqc: no # Run fastqc or not. Options: no, before, after, both. 
+
+# Align to reference
+# Had to compress with bgzip for bcftools to work
+reference: test_data/varcall_test_data/LL6_1.fasta.gz
+
+# Standard parameters.
+adapters: ../../../data/adapters/adapters.fa
+phix: ../../../data/adapters/phix174_ill.ref.fa.gz
+
+```
+
+Example structure for the `dataDir`:
+
+```
+.
+└── dataDir/
+    ├── Sample1/
+    │   ├── Sample1_ABCD_R1.fq.gz
+    │   └── Sample1_EFGH_R2.fq.gz
+    └── Sample2/
+        ├── Sample2_ABCD_R1.fq.gz
+        └── Sample2_EFGH_R2.fq.gz
+```
+
+In which case, `sampleFile` would look like this:
+
+```
+Sample1
+Sample2
+```
+
+#### 3. Running variant calling pipeline. (Recommened to run with `--dry` option first)
+
+```bash
+nccrPipe isolate -c <full/path/to/your_config.yaml> -m call_variants  
+```
+
 
 ### Running RNAseq pipeline
 

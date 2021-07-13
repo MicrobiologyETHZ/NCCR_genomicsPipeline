@@ -41,3 +41,6 @@ rule star:
 
 rule kallisto:
     input: [OUTDIR/f'kallisto/{sample}.done' for sample in SAMPLES]
+
+rule satCurves:
+    input: [OUTDIR/f'bam/{sample}/{sample}_Aligned.sortedByCoord.out.satCurve.csv' for sample in SAMPLES]

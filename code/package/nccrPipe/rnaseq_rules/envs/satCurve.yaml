@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - samtools>=1.9
+  - bedtools>=2.29
+  - python>=3.7
+  - pandas
