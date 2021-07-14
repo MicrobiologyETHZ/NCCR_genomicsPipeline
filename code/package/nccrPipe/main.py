@@ -32,7 +32,8 @@ def rnaseq(config, method, local, dry):
 # Isolate
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
-@click.option('--method', '-m', default='call_variants', help='Workflow to run')
+@click.option('--method', '-m', default='call_variants', help='Workflow to run, '
+                                                              'options: [call_variants, assemble, assemble_only]')
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")

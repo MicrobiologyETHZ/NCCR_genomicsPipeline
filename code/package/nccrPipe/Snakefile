@@ -53,7 +53,7 @@ rule merge_fastq:
 
 
 # Assembly and Annotation
-rule assemble:
+rule assemble_only:
     input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
 
 rule unicycle:
@@ -75,9 +75,9 @@ rule test_genelen:
 #         [OUTDIR/f'plasmid/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
 #         [OUTDIR/f'plasmid/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
-rule annotate:
+rule assemble:
     input: [OUTDIR/f'assembly/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
-        [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+       # [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
 
 rule alignment_qc:

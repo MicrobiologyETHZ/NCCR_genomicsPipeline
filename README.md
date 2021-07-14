@@ -36,22 +36,19 @@ pip install -e .
 
 ```
 
-### Running the pipeline
+### Running the isolate pipeline
 
 ```
-nccrPipe COMMAND [OPTIONS]
-
-Commands:
-  isolate
-  rnaseq
-  unlock
+Usage: nccrPipe isolate [OPTIONS]
 
 Options:
-  -c, --config TEXT Path to configuration file 
-  -m, --method TEXT Method/Analysis to run
-  --dry             Show commands without running them
-  --local           Run locally/without submitting to the cluster
-  --help            Show the help message
+  -c, --config TEXT  Configuration File
+  -m, --method TEXT  Workflow to run, options: [call_variants, assemble,
+                     assemble_only]
+  --local            Run on local machine
+  --no-conda         Do not use conda, under construction, do not use
+  --dry              Show commands without running them
+  --help             Show this message and exit.
 
 ```
 
@@ -59,10 +56,11 @@ Options:
 
 #### 1. Testing the installation.
 
-Run ```nccrPipe isolate --dry```. This by default will do a dry run of variant calling pipeline on the test dataset. 
-Run ```nccrPipe isolate ``` This will run the variant calling pipeline on the test dataset
-Use `--local` if you don't the jobs to be submitted to queuing system. 
+Run ```nccrPipe isolate -m call_variants --dry```. This will do a dry run of variant calling pipeline on the test dataset. 
+Run ```nccrPipe isolate -m call_variants``` This will run the variant calling pipeline on the test dataset
+Use `--local` if you don't the jobs to be submitted to the queuing system. 
 
+The first time you run, it will take a while to create the conda environments.
 
 #### 2. Creating a config file and sample file
 
@@ -80,6 +78,11 @@ sampleFile: test_data/varcall_test_data/test_samples.txt
 fq_fwd: _R1.fq.gz
 fq_rvr: _R2.fq.gz
 
+# Align to reference
+# Reference genome to call variants against
+reference: test_data/varcall_test_data/LL6_1.fasta.gz
+
+# The rest of the parameters don't have to be changed, copy and paste into your config file
 # Preprocessing 
 qc: yes # yes to perform preprocessing, no to skip
 
@@ -92,11 +95,8 @@ minlen: 45
 merged: false # By default do not use merge for isolate genome assembly
 fastqc: no # Run fastqc or not. Options: no, before, after, both. 
 
-# Align to reference
-# Had to compress with bgzip for bcftools to work
-reference: test_data/varcall_test_data/LL6_1.fasta.gz
 
-# Standard parameters.
+# Standard parameters. 
 adapters: ../../../data/adapters/adapters.fa
 phix: ../../../data/adapters/phix174_ill.ref.fa.gz
 
@@ -127,6 +127,18 @@ Sample2
 ```bash
 nccrPipe isolate -c <full/path/to/your_config.yaml> -m call_variants  
 ```
+
+
+#### 4. Running genome assembly pipeline.
+
+```bash
+nccrPipe isolate -c <full/path/to/your_config.yaml> -m assemble
+```
+
+
+#### Troubleshooting
+
+Log files, stdout and stderr files for each step of the pipeline can be found in `outDir/logs/`
 
 
 ### Running RNAseq pipeline

@@ -59,7 +59,7 @@ rule bcf_call:
     threads:
         32
     shell:
-        "bcftools mpileup -Ou -f -q30 -d3000 {input.scaf}  {input.bam} | " 
+        "bcftools mpileup -Ou -q30 -d3000 -f {input.scaf}  {input.bam} | " 
         "bcftools call -mv -o {output.vcf} 2> {log.log}"
 
 

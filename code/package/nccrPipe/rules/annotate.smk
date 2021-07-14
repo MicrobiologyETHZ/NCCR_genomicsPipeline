@@ -15,7 +15,7 @@ rule gunzipAnn:
         mem = 7700,
         time = 1400
     conda:
-        'envs/compare_genomes.yaml'
+        'envs/annotate.yaml'
     threads:
         8
     shell:
@@ -78,7 +78,7 @@ rule emapper:
         ' -m diamond --data_dir {params.dataDir} &> {log.log} '
 
 
-
+# todo add KEGG annotation
 
 
 #
@@ -112,7 +112,6 @@ rule emapper:
 #         '--prefix {params.locustag} {input.scaffolds} '
 #         '--force '
 
-# todo add EgNOGG annotation
 
 
 
