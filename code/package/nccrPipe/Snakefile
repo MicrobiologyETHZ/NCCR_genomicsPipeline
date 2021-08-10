@@ -67,7 +67,7 @@ rule quastCheckUni:
 
 
 rule test_genelen:
-    input: "/science/ansintsova/bioinfocore/aligner_test/data/assembly/Sal/Sal.scaffolds.min500.fasta.gz.genelen.done"
+    input: "/science/ansintsova/bioinfocore/aligner_test/data/assembly/Sal/Sal.scaffolds.min500.fasta.genelen.done"
 
 #
 # rule plasmid:

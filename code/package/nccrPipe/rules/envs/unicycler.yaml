@@ -1,9 +1,11 @@
 channels:
   - bioconda
 dependencies:
-  #- biopython>1.7
-  - unicycler==0.4.8
-  - samtools=1.11
-  #- assembly-stats
+  - unicycler=0.4.4
+  - samtools=1.12
+  - tbb=2020.3
+  - pilon=1.24
+  - bowtie2=2.4.4
+
 
 

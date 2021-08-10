@@ -291,7 +291,7 @@ rule calculat_genlen:
     params:
         qerrfile = '{assembly}.genelen.done.qerr',
         qoutfile = '{assembly}.genelen.done.qout',
-        diamondDB = '/nfs/cds/Databases/DIAMOND/nr',
+        diamondDB = config['diamondDB'],
         scratch = 6000,
         mem = 7700,
         time = 1400,
