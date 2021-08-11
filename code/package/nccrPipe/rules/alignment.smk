@@ -58,27 +58,27 @@ rule align_to_self:
         "{input.fq1} {input.fq2} | samtools sort --reference {input.fa} "
         "-l 9 -@ 4 -O bam -o {output.bam} -T {output.bam}.tmp; samtools index {output.bam}"
 
+if config['reference']:
+    if config['reference'].endswith('.fasta') or config['reference'].endswith('.fna'):
+        REFPATH = Path(config['reference']) # todo refactor
 
-if config['reference'].endswith('.fasta') or config['reference'].endswith('.fna'):
-    REFPATH = Path(config['reference']) # todo refactor
+    elif config['reference'].endswith('.fasta.gz') or config['reference'].endswith('.fna.gz'):
 
-elif config['reference'].endswith('.fasta.gz') or config['reference'].endswith('.fna.gz'):
+        REFPATH = Path(config['reference']).parent.joinpath(Path(config['reference']).stem)
 
-    REFPATH = Path(config['reference']).parent.joinpath(Path(config['reference']).stem)
-
-    rule gunzip:
-        input: str(REFPATH) + ".gz"
-        output: REFPATH
-        params:
-            qerrfile = lambda wildcards: OUTDIR/f'logs/ref_bams/{REFPATH}.gunzip.qerr',
-            qoutfile = lambda wildcards: OUTDIR/f'logs/ref_bams/{REFPATH}.gunzip.qout',
-            scratch = 6000,
-            mem = 7700,
-            time = 1400
-        log: log= OUTDIR/'logs/ref_bams/gunzip.log'
-        threads:
-            4
-        shell: 'gunzip {input} 2> {log.log}'
+        rule gunzip:
+            input: str(REFPATH) + ".gz"
+            output: REFPATH
+            params:
+                qerrfile = lambda wildcards: OUTDIR/f'logs/ref_bams/{REFPATH}.gunzip.qerr',
+                qoutfile = lambda wildcards: OUTDIR/f'logs/ref_bams/{REFPATH}.gunzip.qout',
+                scratch = 6000,
+                mem = 7700,
+                time = 1400
+            log: log= OUTDIR/'logs/ref_bams/gunzip.log'
+            threads:
+                4
+            shell: 'gunzip {input} 2> {log.log}'
 
 
 elif config['scaffold'] and config['scaffold'].startswith('min'):

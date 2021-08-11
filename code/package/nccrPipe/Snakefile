@@ -8,6 +8,12 @@ OUTDIR = Path(config['outDir'])
 SAMPLEFILE = Path(config['sampleFile'])
 SAMPLES = get_subsamples(SAMPLEFILE)
 
+if config['assembler'] == 'spades':
+    ASSEMBLIES =[OUTDIR/f'assembly/{sample}/{sample}.scaffolds.min500.fasta' for sample in SAMPLES]
+elif config['assembler'] == 'unicycler':
+    ASSEMBLIES = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/assembly.fasta' for sample in SAMPLES]
+else:
+    ASSEMBLIES = []
 
 
 include: "rules/preprocess.smk"
@@ -22,15 +28,13 @@ include: "rules/profile.smk"
 include: "rules/count.smk"
 
 """
-Preprocessing:
+PREPROCESSING
 
 In the config file, can specify whether to run FastQC before preprocessing, after, both or not at all.
 By default, will only run after preprocessing.
 
-Preprocessing:
-    - 
-
 """
+
 if not config['fastqc']:
     rule preprocess:
         input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
@@ -52,36 +56,79 @@ rule merge_fastq:
     input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
 
 
-# Assembly and Annotation
-rule assemble_only:
-    input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
+"""
+ASSEMBLY and ANNOTATION
 
-rule unicycle:
-    input:[OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{sample}.unicycler.done' for sample in SAMPLES]
+In the config specify whether to use spades or unicycler. Default will be spades
+
+"""
+if config['assembler'] == 'spades':
+    rule assemble_only:
+        input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
+
+    rule assemble:
+        input: [OUTDIR/f'assembly/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
+       # [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+
+
+elif config['assembler'] == 'unicycler':
+    rule assemble:
+        input:[OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{sample}.unicycler.done' for sample in SAMPLES]
+
+    # rule quastCheck:
+    #     input: OUTDIR/f'unicycler/{config["unimode"]}/unicycler_assembly_qc.quast_all.done'
+
+else:
+    print(f'{config["assembler"]} is not a recognized option for assembler. Options: [spades, unicycler]')
+    sys.exit(1)
+
 
 rule quastCheck:
     input: OUTDIR/'quast/assembly_qc.quast_all.done'
 
-rule quastCheckUni:
-    input: OUTDIR/f'unicycler/{config["unimode"]}/unicycler_assembly_qc.quast_all.done'
 
-
-rule test_genelen:
+rule compare_genelen:
     input: "/science/ansintsova/bioinfocore/aligner_test/data/assembly/Sal/Sal.scaffolds.min500.fasta.genelen.done"
 
-#
-# rule plasmid:
-#     input: [OUTDIR/f'plasmid/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES],
-#         [OUTDIR/f'plasmid/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
-#         [OUTDIR/f'plasmid/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
 
-rule assemble:
-    input: [OUTDIR/f'assembly/{sample}/prokka/{sample}.prokka.done' for sample in SAMPLES],
-       # [OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+"""
+VARIANT CALLING
 
+
+"""
+
+rule align:
+    input: [OUTDIR/f'bams/{sub}/{sub}.bwa.done' for sub in SAMPLES]
+
+rule align_with_ref:
+    input: [OUTDIR/f'ref_bams/{sub}/{sub}.refbwa.done' for sub in SAMPLES]
 
 rule alignment_qc:
     input: [OUTDIR/f'ref_bams/{sample}/{sample}.bam.stats' for sample in SAMPLES]
+
+rule pileup:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+
+rule anVar:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
+
+rule addGenomeSnpEff:
+    input: OUTDIR/f'VCF/{config["snpEff_reference"]}.snpEff_db.done'
+
+rule call_variants:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.isolate.vcf.done' for sub in SAMPLES]
+
+rule call_vars3:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]
+
+rule markDup:
+    input: [OUTDIR/f'bams/{sub}/{sub}.rmdup.bam' for sub in SAMPLES]
+
+
+"""
+OTHER
+
+"""
 
 rule count_htseq:
     input: [OUTDIR/f'counts/{sample}/{sample}.tsv' for sample in SAMPLES]
@@ -89,7 +136,6 @@ rule count_htseq:
 
 rule nucmer:
     input: [OUTDIR/f'mummer/LL23_{sample}.coords' for sample in SAMPLES]
-
 
 rule runANI:
     input: [OUTDIR/f'ANI/assembly/{i}_{j}_fastani.out' for i in SAMPLES for j in SAMPLES]
@@ -109,43 +155,6 @@ rule phylogeny:
 
 rule findAb:
     input: OUTDIR/f'ariba/summary.done'
-
-
-
-
-#_________________________________________________
-rule pileup:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
-
-rule anVar:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
-
-rule addGenomeSnpEff:
-    input: OUTDIR/f'VCF/{config["snpEff_reference"]}.snpEff_db.done'
-
-
-rule align:
-    input: [OUTDIR/f'bams/{sub}/{sub}.bwa.done' for sub in SAMPLES]
-
-rule align_with_ref:
-    input: [OUTDIR/f'ref_bams/{sub}/{sub}.refbwa.done' for sub in SAMPLES]
-
-
-# rule call_vars:
-#     input: [OUTDIR/f'VCF/{sub}/{sub}.vcf.done' for sub in SAMPLES]
-
-rule call_variants:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.isolate.vcf.done' for sub in SAMPLES]
-
-
-rule call_vars3:
-    input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]
-
-
-rule markDup:
-    input: [OUTDIR/f'bams/{sub}/{sub}.rmdup.bam' for sub in SAMPLES]
-
-# HElPER RULES
 
 rule type:
     input: [OUTDIR/f'typing/{sub}/{sub}.mlst' for sub in SAMPLES]

@@ -27,7 +27,7 @@ assembler: spades # Options: spades and unicycler
 unimode: normal
 
 # Look at gene lengths distribution
-diamondDB: /nfs/cds/Databases/DIAMOND/nr
+diamondDB: /science/ansintsova/bioinfocore/aligner_test/data/finished_assemblies/Sal_db
 
 
 # Standard parameters. Dont change these!!!

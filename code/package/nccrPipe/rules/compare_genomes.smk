@@ -285,6 +285,7 @@ rule iqtree:
        # "iqtree -s {input} -mset WAG,LG,DCmut -T AUTO -B 1000"
         "iqtree -s {input} -m LG+F+R  -T AUTO -B 1000"
 
+
 rule calculat_genlen:
     input: '{assembly}'
     output: touch('{assembly}.genelen.done')

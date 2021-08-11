@@ -157,7 +157,8 @@ rule unicycler_short:
             fq2 = OUTDIR/'clean_reads/{sample}/{sample}.2.fq.gz',
             s = OUTDIR/READ_DIR/'{sample}/{sample}.s.fq.gz',
         output:
-            marker = touch(OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/{sample}.unicycler.done')
+            marker = touch(OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/{sample}.unicycler.done'),
+            assembly = OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/assembly.fasta'
         params:
             outdir = lambda wildcards: OUTDIR/f'unicycler/{config["unimode"]}/{wildcards.sample}',
             qerrfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config["unimode"]}.qerr',

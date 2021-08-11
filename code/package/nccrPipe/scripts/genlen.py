@@ -19,7 +19,8 @@ def blast_genes(faa, db, threads):
     results = subprocess.check_output(arg, shell=True).decode()
     hits = [line.split("\t") for line in results.splitlines()]
     hits = {hit[0]: hit[1:] for hit in hits}
-    return hits
+    return results, hits
+
 
 
 def __main__():
@@ -50,7 +51,9 @@ def __main__():
 
     if args.blast:
         # Blast protein sequences against reference database
-        hits = blast_genes(f'{outfix}.faa', args.db, args.threads)
+        results, hits = blast_genes(f'{outfix}.faa', args.db, args.threads)
+        with open(f'{outfix}.blast.results', 'w') as fh:
+            fh.write(results)
         # Filter hits
         good_hits = {k: v for k, v in hits.items() if float(v[2]) >= args.cutoff}
         # Determine hit lengths
@@ -60,12 +63,12 @@ def __main__():
 
     # Output
     with open(f'{outfix}_results.txt', 'w') as fo:
-        fo.write('hit\tgene_length\thit_length\tgene_over_hit_length')
+        fo.write('gene\tgene_length\thit\thit_length\tgene_over_hit_length\n')
         for k in gene_lengths.keys():
             try:
-                fo.write(f'{k}\t{gene_lengths[k]}\t{hit_lengths[k]}\t{length_ratios[k]}\n')
+                fo.write(f'{k}\t{gene_lengths[k]}\t{good_hits[k][0]}\t{hit_lengths[k]}\t{length_ratios[k]}\n')
             except:
-                fo.write(f'{k}\t{gene_lengths[k]}\tNA\tNA\n')
+                fo.write(f'{k}\t{gene_lengths[k]}\tNA\tNA\tNA\n')
 
 if __name__ == "__main__":
     __main__()
