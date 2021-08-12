@@ -63,6 +63,7 @@ In the config specify whether to use spades or unicycler. Default will be spades
 
 """
 if config['assembler'] == 'spades':
+
     rule assemble_only:
         input: [OUTDIR/f'assembly/{sample}/{sample}.assembly_cleanup.done' for sample in SAMPLES]
 
@@ -72,6 +73,7 @@ if config['assembler'] == 'spades':
 
 
 elif config['assembler'] == 'unicycler':
+
     rule assemble:
         input:[OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{sample}.unicycler.done' for sample in SAMPLES]
 
@@ -90,6 +92,8 @@ rule quastCheck:
 rule compare_genelen:
     input: "/science/ansintsova/bioinfocore/aligner_test/data/assembly/Sal/Sal.scaffolds.min500.fasta.genelen.done"
 
+rule compare_genelen_uni:
+    input: "/science/ansintsova/bioinfocore/aligner_test/data/unicycler/normal/Sal/assembly.fasta.genelen.done"
 
 """
 VARIANT CALLING
