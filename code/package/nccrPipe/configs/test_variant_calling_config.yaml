@@ -21,7 +21,7 @@ fastqc: no # Options: no, before, after, both
 # Align to reference
 # Had to compress with bgzip for bcftools to work
 reference: test_data/varcall_test_data/LL6_1.fasta.gz
-
+tmpdir: test_data/varcall_test_data/output
 # Variant Annotation
 snpEff_root: /nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/
 snpEff_reference: LL6

@@ -1,11 +1,11 @@
 projectName: Test
 
-dataDir:
-outDir:
-sampleFile:
+dataDir: test_data/varcall_test_data/raw
+outDir: test_data/varcall_test_data/output
+sampleFile: test_data/varcall_test_data/test_samples.txt
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
 species:
-fq_fwd:
-fq_rvr:
 
 #Preprocessing
 qc: yes
@@ -16,7 +16,7 @@ minlen: 45
 
 merged: false # By default to do not use merge for isolate genome assembly
 
-fastqc: after # Options: no, before, after, both
+fastqc: no # Options: no, before, after, both
 
 # Assembler
 assembler: spades
@@ -26,7 +26,7 @@ reference: # sample name (ex. LL1) or path to genome assembly
 scaffold: #min0, min500 if want to use filtered assembly
 gffFile: ''
 #
-tmpdir: /science/ansintsova/esbl_strains/tmp
+tmpdir: test_data/varcall_test_data/raw
 ram: 4
 
 # phylophlan

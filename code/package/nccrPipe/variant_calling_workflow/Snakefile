@@ -1,0 +1,89 @@
+from scripts.get_vars import *
+import sys
+
+configfile: "configs/basic_config.yaml"
+
+DATADIR = Path(config['dataDir'])
+OUTDIR = Path(config['outDir'])
+SAMPLEFILE = Path(config['sampleFile'])
+SAMPLES = get_subsamples(SAMPLEFILE)
+
+if config['assembler'] == 'spades':
+    ASSEMBLIES =[OUTDIR/f'assembly/{sample}/{sample}.scaffolds.min500.fasta' for sample in SAMPLES]
+elif config['assembler'] == 'unicycler':
+    ASSEMBLIES = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/assembly.fasta' for sample in SAMPLES]
+else:
+    ASSEMBLIES = []
+
+
+include: "rules/preprocess.smk"
+include: "rules/assemble.smk"
+include: "rules/quast.smk"
+include: "rules/alignment.smk"
+include: "rules/annotate.smk"
+include: "rules/compare_genomes.smk"
+include: "rules/call_variants.smk"
+include: "rules/typing.smk"
+include: "rules/profile.smk"
+include: "rules/count.smk"
+
+"""
+PREPROCESSING
+
+In the config file, can specify whether to run FastQC before preprocessing, after, both or not at all.
+By default, will only run after preprocessing.
+
+"""
+
+if not config['fastqc']:
+    rule preprocess:
+        input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
+elif config['fastqc'] == 'after':
+    rule preprocess:
+        input: OUTDIR/'fastqc/after.multiqc.done'
+elif config['fastqc'] == 'before':
+    rule preprocess:
+        input: OUTDIR/'fastqc/before.multiqc.done'
+elif config['fastqc'] == 'both':
+    rule preprocess:
+        input: OUTDIR/'fastqc/both.multiqc.done'
+else:
+    print(f'{config["fastqc"]} is not a recognized option for fastqc')
+    sys.exit(1)
+
+
+rule merge_fastq:
+    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
+
+
+
+"""
+VARIANT CALLING
+"""
+
+rule align:
+    input: [OUTDIR/f'bams/{sub}/{sub}.bwa.done' for sub in SAMPLES]
+
+rule align_with_ref:
+    input: [OUTDIR/f'ref_bams/{sub}/{sub}.refbwa.done' for sub in SAMPLES]
+
+rule alignment_qc:
+    input: [OUTDIR/f'ref_bams/{sample}/{sample}.bam.stats' for sample in SAMPLES]
+
+rule pileup:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.mpileup' for sub in SAMPLES]
+
+rule anVar:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.snpEff.done' for sub in SAMPLES]
+
+rule addGenomeSnpEff:
+    input: OUTDIR/f'VCF/{config["snpEff_reference"]}.snpEff_db.done'
+
+rule call_variants:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.isolate.vcf.done' for sub in SAMPLES]
+
+rule call_vars3:
+    input: [OUTDIR/f'VCF/{sub}/{sub}.f3.vcf.done' for sub in SAMPLES]
+
+
+

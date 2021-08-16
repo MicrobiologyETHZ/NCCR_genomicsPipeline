@@ -1,0 +1,41 @@
+from scripts.get_vars import *
+import sys
+
+configfile: "configs/basic_config.yaml"
+
+DATADIR = Path(config['dataDir'])
+OUTDIR = Path(config['outDir'])
+SAMPLEFILE = Path(config['sampleFile'])
+SAMPLES = get_subsamples(SAMPLEFILE)
+
+
+
+"""
+PREPROCESSING
+
+In the config file, can specify whether to run FastQC before preprocessing, after, both or not at all.
+By default, will only run after preprocessing.
+
+"""
+
+# todo add merging samples sequenced multiple times
+
+if not config['fastqc']:
+    rule preprocess:
+        input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
+elif config['fastqc'] == 'after':
+    rule preprocess:
+        input: OUTDIR/'fastqc/after.multiqc.done'
+elif config['fastqc'] == 'before':
+    rule preprocess:
+        input: OUTDIR/'fastqc/before.multiqc.done'
+elif config['fastqc'] == 'both':
+    rule preprocess:
+        input: OUTDIR/'fastqc/both.multiqc.done'
+else:
+    print(f'{config["fastqc"]} is not a recognized option for fastqc')
+    sys.exit(1)
+
+
+rule merge_fastq:
+    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
