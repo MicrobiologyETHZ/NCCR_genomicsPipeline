@@ -1,11 +1,13 @@
 projectName: Test_Variant_Calling
 
-dataDir: test_data/varcall_test_data/raw
-outDir: test_data/varcall_test_data/output
-sampleFile: test_data/varcall_test_data/test_samples.txt
+dataDir: test_data/varcall_test_data/small
+outDir: test_data/varcall_test_data/small
+#sampleFile: test_data/varcall_test_data/test_samples.txt
 fq_fwd: _R1.fq.gz
 fq_rvr: _R2.fq.gz
-
+sanitise_name: false
+name_delimiter: _
+name_index: 1
 
 #Preprocessing
 qc: yes

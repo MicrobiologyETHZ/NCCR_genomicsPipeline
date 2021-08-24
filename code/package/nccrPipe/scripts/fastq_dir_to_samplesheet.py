@@ -1,19 +1,21 @@
-# modified from https://github.com/nf-core/rnaseq/blob/master/bin/fastq_dir_to_samplesheet.py
+# Adapted from https://github.com/nf-core/rnaseq/blob/master/bin/fastq_dir_to_samplesheet.py
+
 #!/usr/bin/env python
 
 import os
 import sys
 import glob
 import argparse
-
+import yaml
 
 def parse_args(args=None):
     Description = "Generate samplesheet from a directory of FastQ files."
     Epilog = "Example usage: python fastq_dir_to_samplesheet.py <FASTQ_DIR> <SAMPLESHEET_FILE>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("FASTQ_DIR", help="Folder containing raw FastQ files.")
-    parser.add_argument("SAMPLESHEET_FILE", help="Output samplesheet file.")
+    parser.add_argument("-c", "--configfile", default="", help="Path to config file")
+    parser.add_argument("-i", "--fastq_dir", help="Folder containing raw FastQ files.")
+    parser.add_argument("-o", "--sample_file", help="Output samplesheet file.")
 
     parser.add_argument(
         "-r1",
@@ -72,13 +74,18 @@ def fastq_dir_to_samplesheet(
     def sanitize_sample(path, extension):
         """Retrieve sample id from filename"""
         sample = os.path.basename(path).replace(extension, "")
+        unit = ""
         if sanitise_name:
             sample = sanitise_name_delimiter.join(
                 os.path.basename(path).split(sanitise_name_delimiter)[
                     :sanitise_name_index
                 ]
             )
-        return sample
+            unit = sanitise_name_delimiter.join(
+                os.path.basename(path).split(sanitise_name_delimiter)[
+                    sanitise_name_index:
+                ]).replace(extension, "")
+        return sample, unit
 
     def get_fastqs(extension):
         """
@@ -88,24 +95,20 @@ def fastq_dir_to_samplesheet(
         See also https://stackoverflow.com/questions/6773584/how-is-pythons-glob-glob-ordered
         """
         return sorted(
-            glob.glob(os.path.join(fastq_dir, f"*{extension}"), recursive=False)
+            glob.glob(os.path.join(fastq_dir, f"**/*{extension}"), recursive=True)
         )
-
     read_dict = {}
-
     ## Get read 1 files
     for read1_file in get_fastqs(read1_extension):
-        sample = sanitize_sample(read1_file, read1_extension)
+        sample, unit = sanitize_sample(read1_file, read1_extension)
         if sample not in read_dict:
-            read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample] = {"unit": [], "R1": [], "R2": []}
         read_dict[sample]["R1"].append(read1_file)
-
+        read_dict[sample]['unit'].append(unit)
     ## Get read 2 files
-
     for read2_file in get_fastqs(read2_extension):
-        sample = sanitize_sample(read2_file, read2_extension)
+        sample, _ = sanitize_sample(read2_file, read2_extension)
         read_dict[sample]["R2"].append(read2_file)
-
     ## Write to file
     if len(read_dict) > 0:
         out_dir = os.path.dirname(samplesheet_file)
@@ -113,14 +116,15 @@ def fastq_dir_to_samplesheet(
             os.makedirs(out_dir)
 
         with open(samplesheet_file, "w") as fout:
-            header = ["sample", "fastq_1", "fastq_2"]
+            header = ["sample", "unit", "fastq_1", "fastq_2"]
             fout.write(",".join(header) + "\n")
             for sample, reads in sorted(read_dict.items()):
                 for idx, read_1 in enumerate(reads["R1"]):
                     read_2 = ""
+                    unit = reads['unit'][idx]
                     if idx < len(reads["R2"]):
                         read_2 = reads["R2"][idx]
-                    sample_info = ",".join([sample, read_1, read_2])
+                    sample_info = ",".join([sample, unit, read_1, read_2])
                     fout.write(f"{sample_info}\n")
     else:
         error_str = (
@@ -136,15 +140,30 @@ def fastq_dir_to_samplesheet(
 
 def main(args=None):
     args = parse_args(args)
-    fastq_dir_to_samplesheet(
-        fastq_dir=args.FASTQ_DIR,
-        samplesheet_file=args.SAMPLESHEET_FILE,
-        read1_extension=args.READ1_EXTENSION,
-        read2_extension=args.READ2_EXTENSION,
-        sanitise_name=args.SANITISE_NAME,
-        sanitise_name_delimiter=args.SANITISE_NAME_DELIMITER,
-        sanitise_name_index=args.SANITISE_NAME_INDEX,
-    )
+    if args.configfile:
+        with open(args.configfile) as file:
+            config = yaml.load(file, Loader=yaml.FullLoader)
+        fastq_dir_to_samplesheet(
+            fastq_dir=config['dataDir'],
+            samplesheet_file=os.path.join(config['outDir'], f"{config['projectName']}_sample.csv"),
+            read1_extension=config['fq_fwd'],
+            read2_extension=config['fq_rvr'],
+            sanitise_name=config['sanitise_name'],
+            sanitise_name_delimiter=config['name_delimiter'],
+            sanitise_name_index=config['name_index'],
+        )
+
+
+    else:
+        fastq_dir_to_samplesheet(
+            fastq_dir=args.fastq_dir,
+            samplesheet_file=args.sample_file,
+            read1_extension=args.READ1_EXTENSION,
+            read2_extension=args.READ2_EXTENSION,
+            sanitise_name=args.SANITISE_NAME,
+            sanitise_name_delimiter=args.SANITISE_NAME_DELIMITER,
+            sanitise_name_index=args.SANITISE_NAME_INDEX,
+        )
 
 
 if __name__ == "__main__":
