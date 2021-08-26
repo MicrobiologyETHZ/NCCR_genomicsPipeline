@@ -1,0 +1,29 @@
+projectName: Preprocessing_Example
+
+dataDir: /Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small
+outDir: /Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small
+samples: /Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/Preprocessing_Example_sample.csv
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
+sanitise_name: true
+name_delimiter: _
+name_index: 1
+merge_replicates: true # if set to false, 'sample' in sample.csv has to be a unique sample identifier
+
+#Preprocessing
+qc: yes
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+
+merged: false # By default do not use merge for isolate genome assembly
+fastqc: no # Options: no, before, after, both
+
+
+# Standard parameters. Dont change these!!!
+adapters: ../../../data/adapters/adapters.fa
+phix: ../../../data/adapters/phix174_ill.ref.fa.gz
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+

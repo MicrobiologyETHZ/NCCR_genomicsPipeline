@@ -1,13 +1,17 @@
-from scripts.get_vars import *
+#from scripts.get_vars import *
 import sys
+import os
+from pathlib import Path
+import pandas as pd
 
-configfile: "configs/basic_config.yaml"
-
+configfile: "../configs/basic_config.yaml"
+print(config)
 DATADIR = Path(config['dataDir'])
 OUTDIR = Path(config['outDir'])
-SAMPLEFILE = Path(config['sampleFile'])
-SAMPLES = get_subsamples(SAMPLEFILE)
+# SAMPLEFILE = Path(config['sampleFile'])
+# SAMPLES = get_subsamples(SAMPLEFILE)
 
+SAMPLES = pd.read_csv(config['samples'])['sample'].unique()
 
 
 """
@@ -19,7 +23,12 @@ By default, will only run after preprocessing.
 """
 
 # todo add merging samples sequenced multiple times
+include: "rules/preprocessing.smk"
 
+# rule test:
+#     input: OUTDIR/'clean_reads/LL20/LL20.1.fq.gz'
+
+print(SAMPLES)
 if not config['fastqc']:
     rule preprocess:
         input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
@@ -36,6 +45,6 @@ else:
     print(f'{config["fastqc"]} is not a recognized option for fastqc')
     sys.exit(1)
 
-
-rule merge_fastq:
-    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
+#
+# rule merge_fastq:
+#     input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]

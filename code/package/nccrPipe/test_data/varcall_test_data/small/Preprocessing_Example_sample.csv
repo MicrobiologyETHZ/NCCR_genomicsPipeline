@@ -1,0 +1,4 @@
+sample,unit,fastq_1,fastq_2
+LL20,X020X_L1,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub2/LL20_X020X_L1_R1.fq.gz,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub2/LL20_X020X_L1_R2.fq.gz
+LL20,X020X_L4,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub2/LL20_X020X_L4_R1.fq.gz,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub2/LL20_X020X_L4_R2.fq.gz
+LL23,X453X_L1,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub1/LL23_X453X_L1_R1.fq.gz,/Users/annasintsova/git_repos/NCCR_GENOMICS_PIPELINE_DEV/code/package/nccrPipe/test_data/varcall_test_data/small/LL23_sub1/LL23_X453X_L1_R2.fq.gz

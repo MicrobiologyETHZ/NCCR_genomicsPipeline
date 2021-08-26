@@ -16,7 +16,7 @@ else:
     ASSEMBLIES = []
 
 
-include: "rules/preprocess.smk"
+#include: "rules/preprocess.smk"
 include: "rules/assemble.smk"
 include: "rules/quast.smk"
 include: "rules/alignment.smk"
@@ -34,26 +34,36 @@ In the config file, can specify whether to run FastQC before preprocessing, afte
 By default, will only run after preprocessing.
 
 """
+from snakemake.utils import min_version
+min_version("6.0")
 
-if not config['fastqc']:
-    rule preprocess:
-        input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
-elif config['fastqc'] == 'after':
-    rule preprocess:
-        input: OUTDIR/'fastqc/after.multiqc.done'
-elif config['fastqc'] == 'before':
-    rule preprocess:
-        input: OUTDIR/'fastqc/before.multiqc.done'
-elif config['fastqc'] == 'both':
-    rule preprocess:
-        input: OUTDIR/'fastqc/both.multiqc.done'
-else:
-    print(f'{config["fastqc"]} is not a recognized option for fastqc')
-    sys.exit(1)
+module preprocess:
+    snakefile: "preprocessing/Snakefile"
+    config: config
+
+use rule * from preprocess as preprocess_*
 
 
-rule merge_fastq:
-    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
+#
+# if not config['fastqc']:
+#     rule preprocess:
+#         input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
+# elif config['fastqc'] == 'after':
+#     rule preprocess:
+#         input: OUTDIR/'fastqc/after.multiqc.done'
+# elif config['fastqc'] == 'before':
+#     rule preprocess:
+#         input: OUTDIR/'fastqc/before.multiqc.done'
+# elif config['fastqc'] == 'both':
+#     rule preprocess:
+#         input: OUTDIR/'fastqc/both.multiqc.done'
+# else:
+#     print(f'{config["fastqc"]} is not a recognized option for fastqc')
+#     sys.exit(1)
+#
+#
+# rule merge_fastq:
+#     input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
 
 
 """
