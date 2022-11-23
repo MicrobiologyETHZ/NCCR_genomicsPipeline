@@ -1,4 +1,0 @@
-# make bed
-
-# infer strandiness
-

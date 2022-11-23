@@ -3,7 +3,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - samtools>=1.9
-  - bedtools>=2.29
-  - python>=3.7
-  - pandas
+  - samtools==1.13
+  - bwa==0.7.*
+  - bcftools
+  - gatk4==4.2

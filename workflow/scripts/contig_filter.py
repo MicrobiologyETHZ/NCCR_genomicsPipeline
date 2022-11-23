@@ -29,12 +29,16 @@ def main():
     parser.add_argument('seqtype', type=str, help='Type of input sequence', choices=['contigs', 'scaffolds', 'transcripts'])
     parser.add_argument('infile', type=str, help='Input Sequence file. Either fasta or fasta.gz.')
     parser.add_argument('outprefix', type=str, help='Prefix for output files.')
+    parser.add_argument('atype', type=str, help='Type of assembly, META(GENOMICS/TRANSCRIPTOMICS) or ISO(LATE)', choices=['ISO','META'], default='META')
     args = parser.parse_args()
 
 
     samplename = args.samplename
     seqtype = args.seqtype[:-1]
     filters = [0, 500, 1000]
+    if args.atype == 'ISO':
+        filters = [0, 200, 1000]
+
     infile = args.infile
     outprefix = args.outprefix + '/' + samplename
     sequences = []
@@ -46,8 +50,7 @@ def main():
         sequence_rev = str(Seq(sequence).reverse_complement())
         md5_fw = hashlib.md5(sequence.encode()).hexdigest()
         md5_rev = hashlib.md5(sequence_rev.encode()).hexdigest()
-        seqname = f'{samplename}_{cnt} '
-        #seqname = f'{samplename}-{seqtype}_{cnt} length={seqlen} orig={header}'
+        seqname = f'{samplename}-{seqtype}_{cnt} length={seqlen} orig={header}'
         sequences.append((seqname, sequence, md5_fw, md5_rev, seqlen))
 
     for filtersize in filters:

@@ -8,26 +8,84 @@ from pathlib import Path
 from .scripts import configure_project
 
 import click
+from .scripts import fastq_dir_to_samplesheet as fds
+import yaml
 
 @click.group()
 def main():
     pass
 
-
-#RNAseq
-@main.command()
-@click.option('--config', '-c', default='configs/rnaseq_config.yaml', help='Configuration File')
-@click.option('--method', '-m', default='star', help='star (default) or kallisto')
-@click.option('--local',  is_flag=True, help="Run on local machine")
-@click.option('--dry',  is_flag=True, help="Show commands without running them")
-def rnaseq(config, method, local, dry):
+@main.command(help="Generate samplesheet from a directory of FastQ files.")
+@click.option('--configfile', '-c', default='', help='Configuration File')
+@click.option("-i", "--fastq_dir", help="Folder containing raw FastQ files.")
+@click.option("-o", "--sample_file", help="Output samplesheet file.")
+@click.option("-r1", "--read1_extension", type=str,  default="_R1.fq.gz",
+              help="File extension for read 1.")
+@click.option("-r2", "--read2_extension", type=str, default="_R2.fq.gz",
+              help="File extension for read 2.")
+@click.option("-sn", "--sanitise_name", is_flag=True,
+              help="Whether to further sanitise FastQ file name to get sample id. Used in conjunction with "
+                   "--sanitise_name_delimiter and --sanitise_name_index.")
+@click.option("-sd", "--sanitise_name_delimiter", type=str, default="_",
+              help="Delimiter to use to sanitise sample name.", )
+@click.option("-si", "--sanitise_name_index", type=int, default=1,
+              help="After splitting FastQ file name by --sanitise_name_delimiter "
+                   "all elements before this index (1-based) will be joined to create final sample name.",)
+def samples(configfile, fastq_dir, sample_file, read2_extension, read1_extension, sanitise_name,
+           sanitise_name_delimiter, sanitise_name_index):
     click.echo("Running Eukaryotic RNASeq Pipeline")
+    if configfile:
+        click.echo(f"Config file: {configfile}")
+        with open(configfile) as file:
+            config = yaml.load(file, Loader=yaml.FullLoader)
+        fds.fastq_dir_to_samplesheet(
+            fastq_dir=config['dataDir'],
+            samplesheet_file=config["samples"],
+            read1_extension=config['fq_fwd'],
+            read2_extension=config['fq_rvr'],
+            sanitise_name=config['sanitise_name'],
+            sanitise_name_delimiter=config['name_delimiter'],
+            sanitise_name_index=config['name_index'],
+        )
+    else:
+        fds.fastq_dir_to_samplesheet(
+            fastq_dir=fastq_dir,
+            samplesheet_file=sample_file,
+            read1_extension=read1_extension,
+            read2_extension=read2_extension,
+            sanitise_name=sanitise_name,
+            sanitise_name_delimiter=sanitise_name_delimiter,
+            sanitise_name_index=sanitise_name_index,
+        )
+
+# Assembly
+@main.command()
+@click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+def assemble(config, local, dry, no_conda):
+    click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
-    #click.echo("Samples found: ")
     click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
-    smk_file = "Snakefile_rnaseq"
-    cmd = snakemake_cmd(config, method, smk_file, dry, local)
+    smk_file = "Snakefile"
+    cmd = snakemake_cmd(config, 'assemble', smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
+
+# Call
+@main.command()
+@click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+def call(config, local, dry, no_conda):
+    click.echo("Running Assembly Pipeline")
+    click.echo(f"Config file: {config}")
+    click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
+    smk_file = "Snakefile"
+    cmd = snakemake_cmd(config, 'varcall', smk_file, dry, local, no_conda)
+    click.echo(" ".join(cmd))
+
 
 # Isolate
 @main.command()

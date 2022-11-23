@@ -47,7 +47,7 @@ def config_addition(gbk, name):
 
 
 def add_to_snpEff(gbk,  genome_name, fasta='', nenv='',
-                  env="/nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/"):
+                  env="/nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.1-hdfd78af_2/share/snpeff-5.1-2/"):
     # Create genome info and append to snpeff.config
     str_to_append = config_addition(gbk, genome_name)
     config_path = Path(env)/"snpEff.config"
@@ -74,10 +74,9 @@ salmonella_enterica_SL1344_FQ312003.1.fasta
 
 if __name__ == "__main__":
     args = parse_args()
-
     fa = args.fa if args.fa else ''
     nenv = args.nenv if args.nenv else ''
-    env = args.env if args.env else '/nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/'
+    env = args.env if args.env else '/nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.1-hdfd78af_2/share/snpeff-5.1-2/'
     add_to_snpEff(args.gbk, args.genome_name, fa, nenv, env)
 
 

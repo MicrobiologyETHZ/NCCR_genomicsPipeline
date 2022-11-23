@@ -2,56 +2,84 @@
 # rule zip:
 #     input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
 #
+from pathlib import Path
 
-rule gunzipAnn:
-    input:
-        OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta.gz'
-    output:
-        OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta'
-    params:
-        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qout',
-        scratch = 6000,
-        mem = 7700,
-        time = 1400
-    conda:
-        'envs/annotate.yaml'
-    threads:
-        8
-    shell:
-        "gunzip {input} "
+#
+# rule gunzipAnn:
+#     input:
+#         OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta.gz'
+#     output:
+#         OUTDIR/'{assembly}/{sample1}/{sample1}.scaffolds.min0.fasta'
+#     params:
+#         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qerr',
+#         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample1}.gzip.qout',
+#         scratch = 6000,
+#         mem = 7700,
+#         time = 1400
+#     conda:
+#         'envs/annotate.yaml'
+#     threads:
+#         8
+#     shell:
+#         "gunzip {input} "
 
 
 rule prokka:
-    input:
-        scaffolds = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta',
-        marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done'
-    output:
-        gff = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gff',
-        gbk = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gbk',
-        fna = OUTDIR/'{assembly}/{sample}/prokka/{sample}.fna',
-        faa = OUTDIR/'{assembly}/{sample}/prokka/{sample}.faa',
-        marker = touch(OUTDIR/'{assembly}/{sample}/prokka/{sample}.prokka.done')
+    input: '{assembly}.fasta'
+    output: '{assembly}.gff'
     params:
-        locustag = '{sample}',
-        outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/prokka',
+        locustag = lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,
+        outdir = lambda wildcards: Path(f'{wildcards.assembly}').parent,
         scratch = 1000,
         mem = 4000,
         time = 235,
-        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qout'
+        qerrfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qerr',
+        qoutfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qout'
     conda:
-        'envs/annotate.yaml'
+        'assembly'
     log:
-        log = OUTDIR/'logs/{assembly}/{sample}/prokka/{sample}.prokka.log'
+        log = '{assembly}.prokka.log',
     threads:
         8
     shell:
         'prokka --outdir {params.outdir} '
         '--locustag {params.locustag} '
         '--compliant '
-        '--prefix {params.locustag} {input.scaffolds} '
+        '--prefix {params.locustag} {input} '
         '--force &> {log.log} '
+
+
+
+# rule prokka:
+#     input:
+#         scaffolds = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta',
+#         marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done'
+#     output:
+#         gff = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gff',
+#         gbk = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gbk',
+#         fna = OUTDIR/'{assembly}/{sample}/prokka/{sample}.fna',
+#         faa = OUTDIR/'{assembly}/{sample}/prokka/{sample}.faa',
+#         marker = touch(OUTDIR/'{assembly}/{sample}/prokka/{sample}.prokka.done')
+#     params:
+#         locustag = '{sample}',
+#         outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/prokka',
+#         scratch = 1000,
+#         mem = 4000,
+#         time = 235,
+#         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qerr',
+#         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qout'
+#     conda:
+#         'envs/annotate.yaml'
+#     log:
+#         log = OUTDIR/'logs/{assembly}/{sample}/prokka/{sample}.prokka.log'
+#     threads:
+#         8
+#     shell:
+#         'prokka --outdir {params.outdir} '
+#         '--locustag {params.locustag} '
+#         '--compliant '
+#         '--prefix {params.locustag} {input.scaffolds} '
+#         '--force &> {log.log} '
 
 
 rule emapper:

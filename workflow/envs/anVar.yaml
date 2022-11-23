@@ -1,8 +1,12 @@
 # DO NOT CHANGE THIS FILE
 # If you do change this file,
 # This will generate new env in nccrPipe/.snakemake/conda/
-# Figure out which one and add that path to config (snpEff_nenv!
+# Figure out which one and add that path to config (snpEff_nenv)!
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
 dependencies:
-  - snpeff == 5.0.0
+  - snpeff == 5.1
   - python >=3.8
   - biopython=1.79

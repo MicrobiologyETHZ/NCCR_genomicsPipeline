@@ -7,8 +7,6 @@ Pipeline for analysis of isolate genomes.
 
 ### Steps Currently Included:
 
-Isolate:
-
 - Preprocessing
 - Isolate Genome Assembly 
 - Gene calling and annotation
@@ -17,10 +15,6 @@ Isolate:
 - ANI calculation
 - Phylogenetics with PhyloPhlAn
 
-(eu)RNASeq:
-
-- Align with STAR/count with featureCounts
-- Align and count with kallisto
 
 ### Installation
 
@@ -36,6 +30,13 @@ pip install -e .
 
 ```
 
+### Conda environments
+
+- Using pre-created environments.
+- Recipes could be found in ``
+- Create before running the pipeline [Write instructions]
+
+v 
 ### Running the isolate pipeline
 
 ```

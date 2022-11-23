@@ -1,11 +1,19 @@
-projectName: Test
+projectName: 04-10-22-Btheta_assemble
 
-dataDir:
-outDir:
-sampleFile:
+dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch/Strains_sequencing
+outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch
+samples: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch/04-10-22-theta_assemble.csv
+
+
+sanitise_name: true
+name_delimiter: _
+name_index: 1
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+se: false
+
 species:
-fq_fwd:
-fq_rvr:
+
 
 #Preprocessing
 qc: yes
@@ -16,13 +24,31 @@ minlen: 45
 
 merged: false # By default to do not use merge for isolate genome assembly
 
-fastqc: after # Options: no, before, after, both
-
+fastqc: no # Options: no, before, after, both
+merge_replicates: false
 # Assembler
-assembler: spades
+assembler: unicycler
 
 # Align to reference
-reference: # sample name (ex. LL1) or path to genome assembly
+reference:
+  refDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch/unicycler/normal/refs
+  DH7:
+    - DH1
+    - DH2
+    - DH3
+    - DH5
+    - DH6
+    - DH7
+    - DH8
+  DH15:
+    - DH9
+    - DH11
+    - DH13
+    - DH14
+    - DH15
+    - DH16
+
+
 scaffold: #min0, min500 if want to use filtered assembly
 gffFile: ''
 #
