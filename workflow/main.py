@@ -72,6 +72,7 @@ def assemble(config, local, dry, no_conda):
     cmd = snakemake_cmd(config, 'assemble', smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
 
+
 # Call
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
