@@ -33,9 +33,9 @@ from pathlib import Path
 
 rule gunzipNucmer:
     input:
-        OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min500.fasta.gz'
+        OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min200.fasta.gz'
     output:
-        OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min500.fasta'
+        OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min200.fasta'
     params:
         qerrfile = lambda wildcards: OUTDIR/f'logs/mummer/{wildcards.sample1}.gzip.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/mummer/{wildcards.sample1}.gzip.qout',
@@ -52,8 +52,8 @@ rule gunzipNucmer:
 
 rule run_nucmer:
     input:
-         ref = OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min500.fasta',
-         query = OUTDIR/'assembly/{sample2}/{sample2}.scaffolds.min500.fasta',
+         ref = OUTDIR/'assembly/{sample1}/{sample1}.scaffolds.min200.fasta',
+         query = OUTDIR/'assembly/{sample2}/{sample2}.scaffolds.min200.fasta',
     output:
         OUTDIR/'mummer/{sample1}_{sample2}.delta'
     params:
