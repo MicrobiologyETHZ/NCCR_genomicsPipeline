@@ -67,7 +67,7 @@ In the config specify whether to use spades or unicycler. Default will be spades
 """
 print(SAMPLES)
 if config['assembler'] == 'spades':
-    GFFs =[OUTDIR/f'assembly/{sample}/{sample}.scaffolds.min500.prokka.done' for sample in SAMPLES]
+    GFFs =[OUTDIR/f'assembly/{sample}/{sample}.scaffolds.min200.prokka.done' for sample in SAMPLES]
 elif config['assembler'] == 'unicycler':
     GFFs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/assembly.prokka.done' for sample in SAMPLES]
 else:
