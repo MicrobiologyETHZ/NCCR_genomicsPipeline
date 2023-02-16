@@ -19,7 +19,7 @@ rule assemble_wga:
             marker = touch(OUTDIR/'assembly/{sample}/{sample}.spades.done'),
             scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
             contigs = OUTDIR/'assembly/{sample}/contigs.fasta',
-            min500 = OUTDIR/'assembly/{sample}/{sample}.scaffolds.min200.fasta'
+            min200 = OUTDIR/'assembly/{sample}/{sample}.scaffolds.min200.fasta'
         params:
             sample = lambda wildcards: f'{wildcards.sample}',
             outdir = lambda wildcards: OUTDIR/f'assembly/{wildcards.sample}',
@@ -108,10 +108,10 @@ if config['assembler'] == 'spades': # todo rethink cleanup
         output:
             marker = touch(OUTDIR/'{assembly}/{sample}/{sample}.assembly_cleanup.done'),
             scaffolds0 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta.gz',
-            scaffolds500 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min500.fasta.gz',
+            scaffolds200 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min200.fasta.gz',
             scaffolds1000 = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min1000.fasta.gz',
             contigs0 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min0.fasta.gz',
-            contigs500 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min500.fasta.gz',
+            contigs200 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min200.fasta.gz',
             contigs1000 = OUTDIR/'{assembly}/{sample}/{sample}.contigs.min1000.fasta.gz',
             stats = OUTDIR/'{assembly}/{sample}/{sample}.assembly.stats'
         params:
@@ -164,7 +164,7 @@ if config['assembler'] == 'spades': # todo rethink cleanup
             python ./scripts/contig_filter.py {params.sample} scaffolds {params.workfolder}/{params.sample}/scaffolds.fasta.gz {params.workfolder}/{params.sample}
             pigz -f -p {threads} {params.workfolder}/{params.sample}/*min*fasta
             pigz -f -p {threads} {params.workfolder}/{params.sample}/*hashes
-            assembly-stats -l 500 -t <(zcat {params.workfolder}/{params.sample}/{params.sample}.scaffolds.min500.fasta.gz) > {params.workfolder}/{params.sample}/{params.sample}.assembly.stats
+            assembly-stats -l 200 -t <(zcat {params.workfolder}/{params.sample}/{params.sample}.scaffolds.min200.fasta.gz) > {params.workfolder}/{params.sample}/{params.sample}.assembly.stats
             &> {log.log}
             ";
             eval "$command"
