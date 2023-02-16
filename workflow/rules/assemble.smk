@@ -19,7 +19,7 @@ rule assemble_wga:
             marker = touch(OUTDIR/'assembly/{sample}/{sample}.spades.done'),
             scaffolds = OUTDIR/'assembly/{sample}/scaffolds.fasta',
             contigs = OUTDIR/'assembly/{sample}/contigs.fasta',
-            min500 = OUTDIR/'assembly/{sample}/{sample}.scaffolds.min500.fasta'
+            min500 = OUTDIR/'assembly/{sample}/{sample}.scaffolds.min200.fasta'
         params:
             sample = lambda wildcards: f'{wildcards.sample}',
             outdir = lambda wildcards: OUTDIR/f'assembly/{wildcards.sample}',
