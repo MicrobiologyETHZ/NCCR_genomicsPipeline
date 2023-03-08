@@ -1,8 +1,8 @@
-projectName:
+projectName: 15_02_2023_Erec
 
-dataDir: # directory with raw sequencing data
-outDir:
-samples: # path to the file listing all the samples
+dataDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/raw_data
+outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output
+samples: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/samples.csv
 
 
 sanitise_name: false
@@ -35,7 +35,7 @@ assembler: unicycler
 
 # Align to reference
 reference:
-  refDir:
+  refDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output
 
 scaffold: #min0, min500 if want to use filtered assembly
 gffFile: ''
@@ -78,5 +78,4 @@ adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceSto
 phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
 bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
 bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
-
 
