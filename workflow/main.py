@@ -58,6 +58,21 @@ def samples(configfile, fastq_dir, sample_file, read2_extension, read1_extension
             sanitise_name_index=sanitise_name_index,
         )
 
+
+# Preprocess
+@main.command()
+@click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+def clean(config, local, dry, no_conda):
+    click.echo("Running Assembly Pipeline")
+    click.echo(f"Config file: {config}")
+    click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
+    smk_file = "Snakefile"
+    cmd = snakemake_cmd(config, 'preprocess', smk_file, dry, local, no_conda)
+    click.echo(" ".join(cmd))
+
 # Assembly
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
@@ -70,6 +85,21 @@ def assemble(config, local, dry, no_conda):
     click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
     cmd = snakemake_cmd(config, 'assemble', smk_file, dry, local, no_conda)
+    click.echo(" ".join(cmd))
+
+
+# Align
+@main.command()
+@click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+def align(config, local, dry, no_conda):
+    click.echo("Running Assembly Pipeline")
+    click.echo(f"Config file: {config}")
+    click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
+    smk_file = "Snakefile"
+    cmd = snakemake_cmd(config, 'align', smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
 
 

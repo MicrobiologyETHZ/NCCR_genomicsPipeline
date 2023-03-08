@@ -195,3 +195,50 @@ else:
             8
         shell:
             "cp {input.fq1} {output.fq1_clean}; cp {input.fq2} {output.fq2_clean} "
+
+
+
+rule fastqc_clean:
+        input:
+            fq1 = OUTDIR / 'clean_reads/{sample}/{sample}.1.fq.gz',
+            fq2 = OUTDIR / 'clean_reads/{sample}/{sample}.2.fq.gz'
+        output:
+            fasqc_marker = touch(OUTDIR /'fastqc_clean/{sample}.fastqc_clean.done'),
+        params:
+            outdir = OUTDIR/'fastqc_clean',
+            qoutfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.fastqc_clean.qout',
+            qerrfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.fastqc_clean.qerr',
+            scratch = 500,
+            mem = 8000,
+            time = 235
+        conda:
+            "preprocessing"
+        log:
+            log = OUTDIR /'logs/qc/{sample}.fastqc_clean.log'
+        threads:
+            8
+        shell:
+            "fastqc -o {params.outdir} --noextract {input.fq1} {input.fq2} "
+
+
+rule fastqc:
+        input:
+            fq1 = getFastq1,
+            fq2 = getFastq2,
+        output:
+            fasqc_marker = touch(OUTDIR /'fastqc/{sample}.fastqc.done'),
+        params:
+            outdir = OUTDIR/'fastqc',
+            qoutfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.fastqc.qout',
+            qerrfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.fastqc.qerr',
+            scratch = 500,
+            mem = 8000,
+            time = 235
+        conda:
+            "preprocessing"
+        log:
+            log = OUTDIR /'logs/qc/{sample}.fastqc.log'
+        threads:
+            8
+        shell:
+            "fastqc -o {params.outdir} --noextract {input.fq1} {input.fq2} "
