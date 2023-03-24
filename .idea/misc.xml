@@ -5,19 +5,11 @@
     <option name="openedFilesInfos">
       <list>
         <OpenedFileInfo>
-          <option name="caretOffset" value="0" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/README.md" />
-        </OpenedFileInfo>
-        <OpenedFileInfo>
-          <option name="caretOffset" value="741" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/configs/15-02-2023-Erec-fastqc-config.yaml" />
-        </OpenedFileInfo>
-        <OpenedFileInfo>
           <option name="caretOffset" value="697" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/workflow/Snakefile" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="2408" />
+          <option name="caretOffset" value="1341" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/workflow/rules/preprocess.smk" />
         </OpenedFileInfo>
       </list>
