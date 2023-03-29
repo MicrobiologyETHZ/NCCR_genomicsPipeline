@@ -104,10 +104,41 @@ if config['qc']:
                 threads:
                     24
                 shell:
+                # Xmx1G --> no autodetection of memory
+                # pigz --> use pigz when uncompressing
+                # bgzip --> use bgzip to compress files
+                # overwrite=t grant permission to overwrite files
+                # qin=33 --> input quality offset sanger
+                # ktrim=r right trimming (3')
+                # mink: use shorter kmers at the ends of the read
+                # hdist: hamming distance --> the appropriate hamming distance may differ for short kmers generated with the mink flag
+                # interleaved --> paired reads interleaved in a single file will be autodetected based on their names
+                # k --> at least x amount of bases for mink
+                # fastawrap --> length of lines in fasta output
+                # qtrim=f --> trim read ends to remove bases with quality below trimq (f means neither end)
+                # maq --> will discard reads with average quality below maq value
+                # maxns --> if non-negative, reads with more Ns than this value (after trimming) will be discarded
+                # trimq=6             Regions with average quality BELOW this will be trimmed,
+                #      if qtrim is set to something other than f.
+                # usjni --> set to true to enable JNI-accelerated versions of bbmerge, bbmap and dedupe
+                # minid --> sensitivity flag
+                # bwr --> bandwidth ratio
+                # quickmatch=f --> generate cigar strings more quickly
+                # minhits --> minimum number of seed hits required for candidate sites (higher is faster)
+                # untrim --> undo trimming after mapping
+                # maxindel --> maximum length of insertions and deletions that will be sought
+                #
+                # changes (more sensitive): k=21 hdist=2
+                # slow = t ??
+                # minid lower (from 0.95 to 0.5)
+                # bwr to 0.08 from 0.16
+                # bw to 8 from 12
+                # replace fast with slow
+                # left minhits the same
                     '''
                     command="
-                    bbduk.sh -Xmx1G pigz=t bgzip=f usejni=t threads=12 overwrite=t qin=33 in1={input.fq1} in2={input.fq2} ref={input.adapters} ktrim=r k=23 mink=11 hdist=1 out=stdout.fq outm={output.adapter_matched} outs={output.adapter_singletons} refstats={output.adapter_stats} statscolumns=5 2>> {log.logfile}| bbduk.sh -Xmx1G usejni=t threads=4 interleaved=true overwrite=t qin=33 pigz=t bgzip=f in=stdin.fq out=stdout.fq outm={output.phix_matched} outs={output.phix_singletons} ref={input.phix} k=31 hdist=1 refstats={output.phix_stats} statscolumns=5 2>> {log.logfile}| bbduk.sh -Xmx1G pigz=t bgzip=f usejni=t threads=12 overwrite=t interleaved=true qin=33 in=stdin.fq fastawrap=10000 out=stdout.fq interleaved=true outm={output.qc_failed} outs={output.qc_singletons_tmp} minlength=45 qtrim=r maq=20 maxns=1 overwrite=t stats={output.qc_stats} statscolumns=5 trimq=14 2>> {log.logfile} | bbmap.sh -Xmx32g pigz=t bgzip=f usejni=f threads=20 overwrite=t interleaved=t qin=33 minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path={params.host_reference} qtrim=rl trimq=15 untrim in=stdin.fq outu1={output.fq1_clean} outu2={output.fq2_clean} outm={output.host_matched} 2>> {log.logfile}
-                bbmap.sh -Xmx32g usejni=f threads={threads} overwrite=t qin=33 minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 pigz=t bgzip=f path={params.host_reference} qtrim=rl trimq=15 untrim in={output.qc_singletons_tmp} outu={output.qc_singletons} outm={output.qc_singletons_host} 2>> {log.logfile}
+                        bbduk.sh -Xmx1G pigz=t bgzip=f usejni=t threads=12 overwrite=t qin=33 in1={input.fq1} in2={input.fq2} ref={input.adapters} ktrim=r k=21 mink=11 hdist=2 out=stdout.fq outm={output.adapter_matched} outs={output.adapter_singletons} refstats={output.adapter_stats} statscolumns=5 2>> {log.logfile}| bbduk.sh -Xmx1G usejni=t threads=4 interleaved=true overwrite=t qin=33 pigz=t bgzip=f in=stdin.fq out=stdout.fq outm={output.phix_matched} outs={output.phix_singletons} ref={input.phix} k=21 hdist=2 refstats={output.phix_stats} statscolumns=5 2>> {log.logfile}| bbduk.sh -Xmx1G pigz=t bgzip=f usejni=t threads=12 overwrite=t interleaved=true qin=33 in=stdin.fq fastawrap=10000 out=stdout.fq interleaved=true outm={output.qc_failed} outs={output.qc_singletons_tmp} minlength=45 qtrim=r maq=20 maxns=1 overwrite=t stats={output.qc_stats} statscolumns=5 trimq=14 2>> {log.logfile} | bbmap.sh -Xmx32g pigz=t bgzip=f usejni=f threads=20 overwrite=t interleaved=t qin=33 minid=0.5 maxindel=200000 bwr=0.08 bw=8 quickmatch slow minhits=2 path={params.host_reference} qtrim=rl trimq=15 untrim in=stdin.fq outu1={output.fq1_clean} outu2={output.fq2_clean} outm={output.host_matched} 2>> {log.logfile}
+                bbmap.sh -Xmx32g usejni=f threads={threads} overwrite=t qin=33 minid=0.5 maxindel=200000 bwr=0.08 bw=8 quickmatch slow minhits=2 pigz=t bgzip=f path={params.host_reference} qtrim=rl trimq=15 untrim in={output.qc_singletons_tmp} outu={output.qc_singletons} outm={output.qc_singletons_host} 2>> {log.logfile}
                 ";
                     echo "$command" > {log.command};
                     eval "$command"
