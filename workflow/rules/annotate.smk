@@ -44,7 +44,7 @@ rule emapper:
     threads:
         16
     shell:
-        'python /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/lifeer/eggnog-mapper/emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
+        'emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
         '--cpu 16 --temp_dir {params.outdir} '
         ' -m diamond --data_dir {params.dataDir} &> {log.log} '
 
