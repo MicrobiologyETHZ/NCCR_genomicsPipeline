@@ -25,7 +25,7 @@ include: "rules/preprocess.smk"
 include: "rules/assemble.smk"
 # include: "rules/quast.smk"
 # include: "rules/alignment.smk"
-# include: "rules/annotate.smk"
+include: "rules/annotate.smk"
 # include: "rules/compare_genomes.smk"
 include: "rules/call_variants.smk"
 # include: "rules/typing.smk"
@@ -80,8 +80,6 @@ rule assemble:
     input: GFFs
 
 
-
-
 """
 Variant Calling
 """
@@ -101,6 +99,19 @@ rule align:
 
 rule varcall:
     input: VCFs
+
+"""
+Annotation
+"""
+if config['assembler'] == 'spades':
+    FAAs =[OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+elif config['assembler'] == 'unicycler':
+    FAAs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+else:
+    FAAs = []
+
+rule annotate:
+    input: FAAs
 
 
 # if config['assembler'] == 'spades':

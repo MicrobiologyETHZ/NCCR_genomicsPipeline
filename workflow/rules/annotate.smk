@@ -24,84 +24,27 @@ from pathlib import Path
 #         "gunzip {input} "
 
 
-rule prokka:
-    input: '{assembly}.fasta'
-    output: '{assembly}.gff'
-    params:
-        locustag = lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,
-        outdir = lambda wildcards: Path(f'{wildcards.assembly}').parent,
-        scratch = 1000,
-        mem = 4000,
-        time = 235,
-        qerrfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qerr',
-        qoutfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qout'
-    conda:
-        'assembly'
-    log:
-        log = '{assembly}.prokka.log',
-    threads:
-        8
-    shell:
-        'prokka --outdir {params.outdir} '
-        '--locustag {params.locustag} '
-        '--compliant '
-        '--prefix {params.locustag} {input} '
-        '--force &> {log.log} '
-
-
-
-# rule prokka:
-#     input:
-#         scaffolds = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta',
-#         marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done'
-#     output:
-#         gff = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gff',
-#         gbk = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gbk',
-#         fna = OUTDIR/'{assembly}/{sample}/prokka/{sample}.fna',
-#         faa = OUTDIR/'{assembly}/{sample}/prokka/{sample}.faa',
-#         marker = touch(OUTDIR/'{assembly}/{sample}/prokka/{sample}.prokka.done')
-#     params:
-#         locustag = '{sample}',
-#         outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/prokka',
-#         scratch = 1000,
-#         mem = 4000,
-#         time = 235,
-#         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qerr',
-#         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qout'
-#     conda:
-#         'envs/annotate.yaml'
-#     log:
-#         log = OUTDIR/'logs/{assembly}/{sample}/prokka/{sample}.prokka.log'
-#     threads:
-#         8
-#     shell:
-#         'prokka --outdir {params.outdir} '
-#         '--locustag {params.locustag} '
-#         '--compliant '
-#         '--prefix {params.locustag} {input.scaffolds} '
-#         '--force &> {log.log} '
-
-
 rule emapper:
-    input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
+    input: faa = OUTDIR/"{assembly}/{sample}/{sample}.faa"
+    #input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
     output: marker = touch(OUTDIR/"{assembly}/{sample}/eggnog/{sample}.eggnog.done")
     params:
         sample = "{sample}",
         outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/eggnog',
-        dataDir = "/science/emapper-data-5.0.0", # todo put this into config
+        dataDir = "/science/ansintsova/eggnog-data/", # todo put this into config
         scratch = 1000,
         mem = 4000,
         time = 235,
-        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emappper.qerr',
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qout'
     conda:
-        'envs/emapper.yaml'
+        'emapper'
     log:
         log = OUTDIR/'logs/{assembly}/{sample}/eggnog/{sample}.emapper.log'
     threads:
         16
     shell:
-        'emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
+        'python /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/lifeer/eggnog-mapper/emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
         '--cpu 16 --temp_dir {params.outdir} '
         ' -m diamond --data_dir {params.dataDir} &> {log.log} '
 
