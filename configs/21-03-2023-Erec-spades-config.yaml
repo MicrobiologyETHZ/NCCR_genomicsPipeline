@@ -28,7 +28,7 @@ fastqc: no # Options: no, before, after, both
 merge_replicates: false
 
 # Assembler
-assembler: unicycler
+assembler: spades
 
 
 # IGNORE ALL OF THE OPTIONS BELOW
