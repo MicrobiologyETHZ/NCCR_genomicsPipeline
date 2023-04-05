@@ -103,10 +103,11 @@ rule varcall:
 """
 Annotation
 """
+db=config['database']
 if config['assembler'] == 'spades':
-    FAAs =[OUTDIR/f'assembly/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+    FAAs =[OUTDIR/f'assembly/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
 elif config['assembler'] == 'unicycler':
-    FAAs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/eggnog/{sample}.eggnog.done' for sample in SAMPLES]
+    FAAs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
 else:
     FAAs = []
 

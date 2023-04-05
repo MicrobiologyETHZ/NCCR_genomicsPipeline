@@ -117,7 +117,7 @@ def call(config, local, dry, no_conda):
     cmd = snakemake_cmd(config, 'varcall', smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
 
-# Assembly
+# Annotate
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
 @click.option('--local',  is_flag=True, help="Run on local machine")

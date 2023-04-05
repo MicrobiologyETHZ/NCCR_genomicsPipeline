@@ -1,4 +1,4 @@
-projectName: 29_03_2023_Erec_unicycler
+projectName: 31_03_2023_Erec_kegg_annotation
 
 dataDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/raw_data
 outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output
@@ -30,17 +30,19 @@ merge_replicates: false
 # Assembler
 assembler: unicycler
 
+# Annotation
+database: kegg #eggnog or kegg
+
 
 # IGNORE ALL OF THE OPTIONS BELOW
 
 # Align to reference
-reference:
+reference: 
   refDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/spreet/erectale/scratch/15_02_2023_Erec/raw_data/ref_genomes
   CP092643.1.genome:
     - Unknown_BF302-01R0001
     - Unknown_BF302-01R0002
     - Unknown_BF302-01R0003
-
 
 scaffold: #min0, min500 if want to use filtered assembly
 gffFile: ''
