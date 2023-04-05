@@ -36,7 +36,7 @@ pip install -e .
 - Recipes could be found in ``
 - Create before running the pipeline [Write instructions]
 
-v 
+
 ### Running the isolate pipeline
 
 ```
