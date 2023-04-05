@@ -52,10 +52,10 @@ if config['database'] == 'eggnog':
 elif config['database'] == 'kegg':
     rule kegg:
         input: faa = OUTDIR/'{assembly}/{sample}/{sample}.faa'
-        output: marker = touch(OUTDIR/'{assembly}/{sample}/kegg/{sample}.kegg.done')
+        output: touch(OUTDIR/'{assembly}/{sample}/kegg/{sample}.kegg.done')
         params:
-            #sample = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg/', # todo remove this?
-            outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg', # needs to exist before starting the rule
+            outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg/', # needs to exist before starting the rule
+            prefix = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg/{wildcards.sample}',
             dataDir = f"/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/apr2022/kegg_db/kegg/kegg_for_prokka-with_ko.dmnd", # Path to the (processed) kegg database
             koDir = f"/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/apr2022/kegg_db/kegg/ko", # Path to the ko directory containing the mapping files
             scratch = 1000,
@@ -71,12 +71,12 @@ elif config['database'] == 'kegg':
             16
         shell:
             'python /nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/annotate_kegg_v2.py '
-            '-r {params.outdir} -q {input} -o {params.outdir} -t {threads} '
-            '-d  {params.dataDir} '
+            '-r {params.outdir} -q {input} -o {params.prefix} -t {threads} '
+            '-d {params.dataDir} '
             '-k {params.koDir}'
 
 else:
-    print("Error: Please choose a valid option for functional annotation. The options are eggnog or kegg.")
+    print("Error: Please choose a valid database for functional annotation. The options are eggnog or kegg.")
     sys.exit(1)
 
 
