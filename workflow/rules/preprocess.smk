@@ -92,7 +92,7 @@ if config['qc']:
                 params:
                     qoutfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.qc.qout',
                     qerrfile = lambda wildcards: OUTDIR /f'logs/qc/{wildcards.sample}.qc.qerr',
-                    host_reference = '/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENERAL_METAGT_ANALYSIS_PAN/data/resources/human_bbmap_ref/',
+                    host_reference = config['bbmap_mouse_ref'],
                     scratch = 500,
                     mem = 2000,
                     time = 235
