@@ -1,4 +1,5 @@
-#
+#!/bin/bash
+
 # rule zip:
 #     input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
 #
@@ -23,90 +24,60 @@ from pathlib import Path
 #     shell:
 #         "gunzip {input} "
 
+if config['database'] == 'eggnog':
+    rule emapper:
+        input: faa = OUTDIR/"{assembly}/{sample}/{sample}.faa"
+        #input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
+        output: marker = touch(OUTDIR/"{assembly}/{sample}/eggnog/{sample}.eggnog.done")
+        params:
+            sample = "{sample}",
+            outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/eggnog',
+            dataDir = "/science/ansintsova/eggnog-data/", # todo put this into config
+            scratch = 1000,
+            mem = 4000,
+            time = 235,
+            qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qerr',
+            qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qout'
+        conda:
+            'emapper'
+        log:
+            log = OUTDIR/'logs/{assembly}/{sample}/eggnog/{sample}.emapper.log'
+        threads:
+            16
+        shell:
+            'emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
+            '--cpu 16 --temp_dir {params.outdir} '
+            ' -m diamond --data_dir {params.dataDir} &> {log.log} '
 
-rule prokka:
-    input: '{assembly}.fasta'
-    output: '{assembly}.gff'
-    params:
-        locustag = lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,
-        outdir = lambda wildcards: Path(f'{wildcards.assembly}').parent,
-        scratch = 1000,
-        mem = 4000,
-        time = 235,
-        qerrfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qerr',
-        qoutfile = lambda wildcards: OUTDIR/'logs'/Path(f'{wildcards.assembly}').parent.stem + '.prokka.qout'
-    conda:
-        'assembly'
-    log:
-        log = '{assembly}.prokka.log',
-    threads:
-        8
-    shell:
-        'prokka --outdir {params.outdir} '
-        '--locustag {params.locustag} '
-        '--compliant '
-        '--prefix {params.locustag} {input} '
-        '--force &> {log.log} '
+elif config['database'] == 'kegg':
+    rule kegg:
+        input: faa = OUTDIR/'{assembly}/{sample}/{sample}.faa'
+        output: touch(OUTDIR/'{assembly}/{sample}/kegg/{sample}.kegg.done')
+        params:
+            outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg/', # needs to exist before starting the rule
+            prefix = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/kegg/{wildcards.sample}',
+            dataDir = f"/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/apr2022/kegg_db/kegg/kegg_for_prokka-with_ko.dmnd", # Path to the (processed) kegg database
+            koDir = f"/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/apr2022/kegg_db/kegg/ko", # Path to the ko directory containing the mapping files
+            scratch = 1000,
+            mem = 4000,
+            time = 235,
+            qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/kegg/{wildcards.sample}.kegg.qerr',
+            qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/kegg/{wildcards.sample}.kegg.qout'
+        conda:
+            'KEGG'
+        log:
+            log =  OUTDIR/'logs/{assembly}/{sample}/kegg/{sample}.kegg.log'
+        threads:
+            16
+        shell:
+            'python /nfs/nas22/fs2202/biol_micro_sunagawa/Projects/PAN/GENOMES_COLLECTION_PAN/data/resources/soft/kegg_annotation/annotate_kegg_v2.py '
+            '-r {params.outdir} -q {input} -o {params.prefix} -t {threads} '
+            '-d {params.dataDir} '
+            '-k {params.koDir}'
 
-
-
-# rule prokka:
-#     input:
-#         scaffolds = OUTDIR/'{assembly}/{sample}/{sample}.scaffolds.min0.fasta',
-#         marker = OUTDIR/'{assembly}/{sample}/{sample}.spades.done'
-#     output:
-#         gff = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gff',
-#         gbk = OUTDIR/'{assembly}/{sample}/prokka/{sample}.gbk',
-#         fna = OUTDIR/'{assembly}/{sample}/prokka/{sample}.fna',
-#         faa = OUTDIR/'{assembly}/{sample}/prokka/{sample}.faa',
-#         marker = touch(OUTDIR/'{assembly}/{sample}/prokka/{sample}.prokka.done')
-#     params:
-#         locustag = '{sample}',
-#         outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/prokka',
-#         scratch = 1000,
-#         mem = 4000,
-#         time = 235,
-#         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qerr',
-#         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/prokka/{wildcards.sample}.prokka.qout'
-#     conda:
-#         'envs/annotate.yaml'
-#     log:
-#         log = OUTDIR/'logs/{assembly}/{sample}/prokka/{sample}.prokka.log'
-#     threads:
-#         8
-#     shell:
-#         'prokka --outdir {params.outdir} '
-#         '--locustag {params.locustag} '
-#         '--compliant '
-#         '--prefix {params.locustag} {input.scaffolds} '
-#         '--force &> {log.log} '
-
-
-rule emapper:
-    input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
-    output: marker = touch(OUTDIR/"{assembly}/{sample}/eggnog/{sample}.eggnog.done")
-    params:
-        sample = "{sample}",
-        outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/eggnog',
-        dataDir = "/science/emapper-data-5.0.0", # todo put this into config
-        scratch = 1000,
-        mem = 4000,
-        time = 235,
-        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emappper.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.assembly}/{wildcards.sample}/eggnog/{wildcards.sample}.emapper.qout'
-    conda:
-        'envs/emapper.yaml'
-    log:
-        log = OUTDIR/'logs/{assembly}/{sample}/eggnog/{sample}.emapper.log'
-    threads:
-        16
-    shell:
-        'emapper.py -i {input.faa} --output_dir {params.outdir} --output {params.sample} '
-        '--cpu 16 --temp_dir {params.outdir} '
-        ' -m diamond --data_dir {params.dataDir} &> {log.log} '
-
-
-# todo add KEGG annotation
+else:
+    print("Error: Please choose a valid database for functional annotation. The options are eggnog or kegg.")
+    sys.exit(1)
 
 
 #

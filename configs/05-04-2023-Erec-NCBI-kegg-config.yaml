@@ -1,0 +1,85 @@
+projectName: 05_04_2023_Erec_kegg_annotation
+
+dataDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output/Erectale_strain_NCBI
+outDir: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output/Erectale_strain_NCBI
+samples: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/slack/spreet/erectale/scratch/15_02_2023_Erec/output/Erectale_strain_NCBI/samples.csv
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+se: false
+
+species:
+
+
+#Preprocessing
+qc: host
+mink: 11
+trimq: 14 # 37
+mapq: 20
+minlen: 45
+
+merged: false # By default to do not use merge for isolate genome assembly
+
+fastqc: no # Options: no, before, after, both
+merge_replicates: false
+
+# Assembler
+assembler: unicycler
+
+# Annotation
+database: kegg #eggnog or kegg
+
+
+# IGNORE ALL OF THE OPTIONS BELOW
+
+# Align to reference
+reference: 
+  refDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/spreet/erectale/scratch/15_02_2023_Erec/raw_data/ref_genomes
+  CP092643.1.genome:
+    - Erectale_strain_NCBI
+
+scaffold: #min0, min500 if want to use filtered assembly
+gffFile: ''
+#
+tmpdir: /science/ansintsova/esbl_strains/tmp
+ram: 4
+
+# phylophlan
+phyloConfig: /science/ansintsova/esbl_strains/phylophlan/isolates_config.cfg
+fnaFolder:
+
+#snpEff
+snpEff_root: /nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/
+snpEff_reference: SL1344
+snpEff_gbk: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.gbk
+snpEff_fa: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.fasta
+snpEff_nenv: .snakemake/conda/88f605b9/share/snpeff-5.0-0/
+
+# panX
+gbkFolder: /science/ansintsova/esbl_strains/plasmid/
+panXpath: /nfs/home/ansintsova/pan-genome-analysis
+cg:  #default should be 1, might need lower one for highly divergent things
+
+# ariba
+aribaDB: /science/ansintsova/esbl_strains/db/card/out.card.prepareref
+
+#fetchMGs
+pathfetchMG: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/ansintsova/fetchMGs
+
+#MASH
+
+refseqMSH: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/mkmherzog/hfd/data/ref/refseq.genomes.k21s1000.msh
+
+#Unicycler
+unimode: normal
+diamondDB:
+
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+
