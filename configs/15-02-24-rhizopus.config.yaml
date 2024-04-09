@@ -1,0 +1,172 @@
+projectName: 15-02-23_rhizopus
+
+#On WGS data
+dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/ggiger/scratch/raw
+outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/ggiger/scratch
+samples: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/ggiger/scratch/samples.csv
+
+# On RNAseq data
+
+# dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/tgassler/scratch/23TG03/raw
+# outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/tgassler/scratch/23TG03
+# samples: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/vorholt/tgassler/scratch/23TG03/12-23_samples.csv
+
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
+se: false
+
+species:
+
+
+#Preprocessing
+qc: yes
+mink: 11
+trimq: 14 # 37
+mapq: 20
+minlen: 45
+
+merged: false # By default to do not use merge for isolate genome assembly
+
+fastqc: no # Options: no, before, after, both
+merge_replicates: false
+
+# Assembler
+assembler: unicycler
+
+# Annotation
+database: kegg #eggnog or kegg
+
+# Align to reference (DNA)
+reference: 
+  refDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/rhizopus/pacbio
+  assembly:
+    # - R0001
+    # - R0002
+    # - R0003
+    # - R0004
+    # - R0005
+    # - R0006
+    # - R0007
+    # - R0008
+    # - R0009
+    # - R0010
+    # - R0011
+    # - R0012
+    # - R0013
+    # - R0014
+    # - R0015
+    # - R0016
+    # - R0017
+    # - R0018
+    # - R0019
+    # - R0020
+    # - R0021
+    # - R0022
+    - R0023
+    - TINJ1
+    - TINJ3
+    - TINJ4
+
+# Align to reference (RNA)
+# reference: 
+#   refDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/rhizopus/pacbio
+#   assembly:
+#     - Unknown_BQ020-001T0003
+#     - Unknown_BQ020-001T0004
+#     - Unknown_BQ020-001T0005
+#     - Unknown_BQ020-001T0006
+#     - Unknown_BQ020-001T0007
+#     - Unknown_BQ020-001T0008
+#     - Unknown_BQ020-001T0009
+#     - Unknown_BQ020-001T0010
+#     - Unknown_BQ020-001T0011
+#     - Unknown_BQ020-001T0012
+#     - Unknown_BQ020-001T0013
+#     - Unknown_BQ020-001T0014
+#     - Unknown_BQ020-001T0015
+#     - Unknown_BQ020-001T0016
+#     - Unknown_BQ020-001T0017
+#     - Unknown_BQ020-001T0018
+#     - Unknown_BQ020-001T0019
+#     - Unknown_BQ020-001T0020
+#     - Unknown_BQ020-001T0021
+#     - Unknown_BQ020-001T0022
+#     - Unknown_BQ020-001T0023
+#     - Unknown_BQ020-001T0024
+#     - Unknown_BQ020-001T0025
+#     - Unknown_BQ020-001T0026
+#     - Unknown_BQ020-001T0027
+#     - Unknown_BQ020-001T0028
+#     - Unknown_BQ020-001T0029
+#     - Unknown_BQ020-001T0030
+#     - Unknown_BQ020-001T0031
+#     - Unknown_BQ020-001T0032
+#     - Unknown_BQ020-001T0033
+#     - Unknown_BQ020-001T0034
+#     - Unknown_BQ020-001T0035
+#     - Unknown_BQ020-001T0036
+#     - Unknown_BQ020-001T0037
+#     - Unknown_BQ020-001T0038
+#     - Unknown_BQ020-001T0039
+#     - Unknown_BQ020-001T0040
+#     - Unknown_BQ020-001T0041
+#     - Unknown_BQ020-001T0042
+#     - Unknown_BQ020-001T0043
+#     - Unknown_BQ020-001T0044
+#     - Unknown_BQ020-001T0045
+#     - Unknown_BQ020-001T0046
+#     - Unknown_BQ020-001T0047
+#     - Unknown_BQ020-001T0048
+#     - Unknown_BQ020-001T0049
+#     - Unknown_BQ020-001T0050
+#     - Unknown_BQ020-001T0051
+#     - Unknown_BQ020-001T0052
+#     - Unknown_BQ020-001T0053
+
+
+scaffold: #min0, min500 if want to use filtered assembly
+gffFile: '/nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/ref/rhizopus/pacbio/braker.gff3'
+#
+tmpdir: /science/ansintsova/esbl_strains/tmp
+ram: 4
+
+# phylophlan
+phyloConfig: /science/ansintsova/esbl_strains/phylophlan/isolates_config.cfg
+fnaFolder:
+
+#snpEff
+snpEff_root: /nfs/home/ansintsova/./miniconda3/pkgs/snpeff-5.0-0/share/snpeff-5.0-0/
+snpEff_reference: SL1344
+snpEff_gbk: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.gbk
+snpEff_fa: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/leafuchs/mcclellandstrains/data/processed/ref/salmonella_enterica_SL1344_FQ312003.1.fasta
+snpEff_nenv: .snakemake/conda/88f605b9/share/snpeff-5.0-0/
+
+# panX
+gbkFolder: /science/ansintsova/esbl_strains/plasmid/
+panXpath: /nfs/home/ansintsova/pan-genome-analysis
+cg:  #default should be 1, might need lower one for highly divergent things
+
+# ariba
+aribaDB: /science/ansintsova/esbl_strains/db/card/out.card.prepareref
+
+#fetchMGs
+pathfetchMG: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/ansintsova/fetchMGs
+
+#MASH
+
+refseqMSH: /nfs/nas22/fs2202/biol_micro_bioinf_nccr/hardt/mkmherzog/hfd/data/ref/refseq.genomes.k21s1000.msh
+
+#Unicycler
+unimode: normal
+diamondDB:
+
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+

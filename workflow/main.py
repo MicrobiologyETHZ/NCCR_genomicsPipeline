@@ -114,7 +114,7 @@ def call(config, local, dry, no_conda):
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format('locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'varcall', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'breseq', smk_file, dry, local, no_conda)
     click.echo(" ".join(cmd))
 
 # Annotate
@@ -164,7 +164,10 @@ def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False):
     elif local:
         cmd = shlex.split(f'snakemake -s {smk_file} --configfile {config} -j 1 {analysis} ')
     else:
-        rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
+        # SGE
+        #rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
+        # Slurm
+        rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; sbatch -t {params.time} --mem-per-cpu={params.mem} -n {threads} -o {params.qoutfile} -e {params.qerrfile}"'
         if no_conda:
             part1 = shlex.split(f'snakemake --configfile {config} -s {smk_file} -k --cluster ')
         else:

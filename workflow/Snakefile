@@ -92,13 +92,17 @@ for ref, samples in config['reference'].items():
         continue
     BAMs += [OUTDIR / f'bams/{sample}/{sample}_to_{ref}.bam' for sample in samples]
     VCFs += [OUTDIR / f'VCF/{sample}/{sample}_to_{ref}.isolate.filtered.vcf' for sample in samples]
-
-
+    
+print(BAMs)
 rule align:
     input: BAMs
 
 rule varcall:
     input: VCFs
+
+breseq_done = [OUTDIR/f'breseq/{sample}.breseq.done' for sample in SAMPLES]
+rule breseq:
+    input: breseq_done
 
 """
 Annotation

@@ -12,6 +12,34 @@
 #     REFPATH = OUTDIR/f'assembly/{config["reference"]}/scaffolds.fasta'
 
 REFDIR = Path(config['reference']['refDir'])
+REFGBK =  Path(config['reference']['refgbk']) if 'refgbk' in config['reference'].keys() else ''
+
+rule run_breseq:
+    input: fq1=OUTDIR / 'clean_reads/{sample}/{sample}.1.fq.gz',
+           fq2=OUTDIR / 'clean_reads/{sample}/{sample}.2.fq.gz',
+    output: 
+            marker = touch(OUTDIR / 'breseq/{sample}.breseq.done')
+    params:
+        out_dir = lambda wildcards: OUTDIR/f'breseq/{wildcards.sample}',
+        gbk = REFGBK,
+        qerrfile=lambda wildcards: OUTDIR / f'logs/{wildcards.sample}/{wildcards.sample}.breseq.qerr',
+        qoutfile=lambda wildcards: OUTDIR / f'logs/{wildcards.sample}/{wildcards.sample}.breseq.qout',
+        scratch=6000,
+        mem=7700,
+        time=1400
+    conda:
+        'call_variants'
+    log:
+        log = OUTDIR /'logs/{sample}.breseq.log'
+    threads:
+        4
+    shell:
+        """
+        breseq -l 120 -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
+
+        """
+
+
 
 rule index:
     input: '{file}.{fasta}'
@@ -127,7 +155,8 @@ rule bcf_filter_isolate:
     threads:
         8
     shell:
-        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<10 || DP4[3]<10 ||(DP4[2] + DP4[3])/sum(DP4) < 0.9 ||  MQ<50' {input} | "
+        #"bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<10 || DP4[3]<10 ||(DP4[2] + DP4[3])/sum(DP4) < 0.9 ||  MQ<50' {input} | "
+        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<5 || DP4[3]<5 ||(DP4[2] + DP4[3])/sum(DP4) < 0.5 ||  MQ<50' {input} | "
         "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} &> {log.log}"
 
 
