@@ -35,7 +35,8 @@ rule run_breseq:
         4
     shell:
         """
-        breseq -l 120 -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
+        #breseq -l 120 -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
+        breseq -p -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
 
         """
 

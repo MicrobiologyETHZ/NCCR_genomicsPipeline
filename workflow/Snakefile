@@ -77,7 +77,7 @@ else:
     GFFs = []
 
 rule assemble:
-    input: GFFs
+    input: GFFs + [str(g).replace("prokka", "genomad") for g in GFFs]
 
 
 """

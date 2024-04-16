@@ -178,6 +178,28 @@ else:
 
 
 
+rule run_genomad:
+    input: '{assembly}.fasta'
+    output: marker = touch('{assembly}.genomad.done')
+    params:
+        sample=lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,
+        outdir=lambda wildcards:Path(f'{wildcards.assembly}').parent,
+        scratch=1000,
+        mem=4000,
+        time=800,
+        db = '/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/EAN/PROPHAGE_REFSEQ_EAN/scratch/databases/genomad_db',
+        qerrfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qerr',
+        qoutfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qout'
+    conda:
+        'phage'
+    log:
+        log='{assembly}.genomad.log',
+    threads:
+        64
+    shell:
+        'genomad end-to-end --threads {threads} --disable-nn-classification '
+        '{input} {params.outdir} {params.db} &> {log.log} ' 
+
 
 
 
