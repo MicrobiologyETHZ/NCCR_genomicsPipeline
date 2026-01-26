@@ -11,8 +11,8 @@
 # else:
 #     REFPATH = OUTDIR/f'assembly/{config["reference"]}/scaffolds.fasta'
 
-REFDIR = Path(config['reference']['refDir'])
-REFGBK =  Path(config['reference']['refgbk']) if 'refgbk' in config['reference'].keys() else ''
+REFDIR = Path(config.get('reference', {}).get('refDir', ''))
+REFGBK = Path(config.get('reference', {}).get('refgbk', ''))
 
 rule run_breseq:
     input: fq1=OUTDIR / 'clean_reads/{sample}/{sample}.1.fq.gz',
@@ -26,7 +26,7 @@ rule run_breseq:
         qoutfile=lambda wildcards: OUTDIR / f'logs/{wildcards.sample}/{wildcards.sample}.breseq.qout',
         scratch=6000,
         mem=7700,
-        time=1400
+        time=1400   
     conda:
         'call_variants'
     log:
@@ -36,6 +36,7 @@ rule run_breseq:
     shell:
         """
         #breseq -l 120 -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
+        # Polymorphic
         breseq -p -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
 
         """
@@ -99,8 +100,8 @@ rule remove_duplicates:
         scratch = 6000,
         mem = 10000,
         time = 1400,
-        ram = config['ram'],
-        tmpdir = config['tmpdir'],
+        ram = config.get('ram', 0),
+        tmpdir = config.get('tmpdir', ''),
         metrics = lambda wildcards: OUTDIR/f'bams/{wildcards.sample}/{wildcards.sample}_{wildcards.ref}.picard.metrics'
     conda:
         'call_variants'
@@ -157,7 +158,7 @@ rule bcf_filter_isolate:
         8
     shell:
         #"bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<10 || DP4[3]<10 ||(DP4[2] + DP4[3])/sum(DP4) < 0.9 ||  MQ<50' {input} | "
-        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<5 || DP4[3]<5 ||(DP4[2] + DP4[3])/sum(DP4) < 0.5 ||  MQ<50' {input} | "
+        "bcftools filter -Ov -sLowQual -g5 -G10 -e 'QUAL<10 ||  DP4[2]<5 || DP4[3]<5 ||(DP4[2] + DP4[3])/sum(DP4) < 0.1 ||  MQ<50' {input} | "
         "bcftools query  -i'FILTER=\"PASS\"' -f '%LINE' -o {output.fvcf} &> {log.log}"
 
 
@@ -168,7 +169,7 @@ rule annotateVars:
         avcf = OUTDIR/'VCF/{sample}/{sample}.filtered.annotated.vcf',
         marker = touch(OUTDIR/'VCF/{sample}/{sample}.snpEff.done')
     params:
-        genome = config["snpEff_reference"],
+        genome = config.get("snpEff_reference", ''),
         #rvcf = lambda wildcards: OUTDIR/f'VCF/{wildcards.sample}/{wildcards.sample}.filtered.renamed.vcf',
         qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.snpEff.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.sample}/{wildcards.sample}.snpEff.qout',

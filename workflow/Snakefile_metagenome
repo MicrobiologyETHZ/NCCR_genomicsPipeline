@@ -1,0 +1,47 @@
+import os
+from pathlib import Path
+
+# Configuration
+configfile: "config.yaml"
+
+# Validate configuration
+
+
+def validate_config(config):
+    required = ['samples', 'long_data_dir', 'output_dir']
+    missing = [k for k in required if k not in config]
+    if missing:
+        raise ValueError(f"Missing required config keys: {missing}")
+
+
+validate_config(config)
+
+# Global variables
+SAMPLES = config['samples']
+LONG_DATA_DIR = Path(config['long_data_dir'])
+DATADIR = Path(config['data_dir'])
+OUTDIR = Path(config['output_dir'])
+SHORT_READ_SUFFIX_R1 = config['short_read_suffix_r1']
+SHORT_READ_SUFFIX_R2 = config['short_read_suffix_r2']
+LONG_SUFFIX = config['long_read_suffix']
+# PLATFORM = config['sequencing_platform']
+THREADS = config.get('threads', 128)
+MEMORY_GB = config.get('memory_gb', 64)
+
+# Include rules
+
+# include: "rules/preprocess.smk"
+include: "rules/hybrid_assembly.smk"
+# include: "rules/operams.smk"
+# include: "rules/polishing.smk"
+# include: "rules/assessment.smk"
+
+# Main targets
+
+
+# TARGET RULE: MetaFlye assembly + polishing
+rule metaflye_assemble:
+    input:
+        expand("{output_dir}/assemblies/metaflye_polished/{sample}/pilon.fasta",
+               output_dir=OUTDIR, sample=SAMPLES)
+    message: "MetaFlye assembly and polishing complete for all samples"

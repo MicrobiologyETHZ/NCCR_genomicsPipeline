@@ -106,7 +106,7 @@ rule calculateANI:
         mem = 7700,
         time = 1400
     conda:
-        'envs/compare_genomes.yaml'
+        compgen
     threads:
         8
     log:

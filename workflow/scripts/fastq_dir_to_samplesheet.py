@@ -23,12 +23,12 @@ def fastq_dir_to_samplesheet(
         if sanitise_name:
             sample = sanitise_name_delimiter.join(
                 os.path.basename(path).split(sanitise_name_delimiter)[
-                :sanitise_name_index
+                    :sanitise_name_index
                 ]
             )
             unit = sanitise_name_delimiter.join(
                 os.path.basename(path).split(sanitise_name_delimiter)[
-                sanitise_name_index:
+                    sanitise_name_index:
                 ]).replace(extension, "")
         return sample, unit
 
@@ -40,22 +40,23 @@ def fastq_dir_to_samplesheet(
         See also https://stackoverflow.com/questions/6773584/how-is-pythons-glob-glob-ordered
         """
         return sorted(
-            glob.glob(os.path.join(fastq_dir, f"**/*{extension}"), recursive=True)
+            glob.glob(os.path.join(
+                fastq_dir, f"**/*{extension}"), recursive=True)
         )
 
     read_dict = {}
-    ## Get read 1 files
+    # Get read 1 files
     for read1_file in get_fastqs(read1_extension):
         sample, unit = sanitize_sample(read1_file, read1_extension)
         if sample not in read_dict:
             read_dict[sample] = {"unit": [], "R1": [], "R2": []}
         read_dict[sample]["R1"].append(read1_file)
         read_dict[sample]['unit'].append(unit)
-    ## Get read 2 files
+    # Get read 2 files
     for read2_file in get_fastqs(read2_extension):
         sample, _ = sanitize_sample(read2_file, read2_extension)
         read_dict[sample]["R2"].append(read2_file)
-    ## Write to file
+    # Write to file
     if len(read_dict) > 0:
         out_dir = os.path.dirname(samplesheet_file)
         if out_dir and not os.path.exists(out_dir):

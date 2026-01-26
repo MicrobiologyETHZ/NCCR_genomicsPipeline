@@ -3,10 +3,10 @@ import sys
 import pandas as pd
 
 
-DATADIR = Path(config['dataDir'])
-OUTDIR = Path(config['outDir'])
+DATADIR = config.get('data_dir', 'data')
+OUTDIR = config.get('output_dir', 'output')
 
-#configfile: "configs/basic_config.yaml"
+# configfile: "configs/basic_config.yaml"
 
 # DATADIR = Path(config['dataDir'])
 # OUTDIR = Path(config['outDir'])
@@ -15,11 +15,19 @@ OUTDIR = Path(config['outDir'])
 
 # Sample Name, Unit, forward reads, reverse reads
 
-sampleInfo = pd.read_csv(config['samples'])
-samples_to_merge = (sampleInfo.loc[sampleInfo.groupby('sample')
-                    .unit.filter(lambda x: x.nunique() > 1).index]['sample']
-                    .unique())
-SAMPLES = pd.read_csv(config['samples'], comment='#')['sample'].unique()
+samples_file = config.get('samples', '')
+if samples_file:
+    sampleInfo = pd.read_csv(samples_file)
+    samples_to_merge = (sampleInfo.loc[sampleInfo.groupby('sample')
+                        .unit.filter(lambda x: x.nunique() > 1).index]['sample']
+                        .unique())
+    SAMPLES = pd.read_csv(samples_file, comment='#')['sample'].unique()
+else:
+    SAMPLES = config.get('sample', [])
+    sampleInfo = None
+
+if len(SAMPLES) == 0:
+    ValueError("Provide samples via 'samples'")
 
 include: "rules/preprocess.smk"
 include: "rules/assemble.smk"
@@ -32,6 +40,8 @@ include: "rules/call_variants.smk"
 # include: "rules/profile.smk"
 # include: "rules/count.smk"
 
+rule find_phage:
+    input: [f'{sample}.genomad.done' for sample in SAMPLES]
 
 
 """
@@ -40,39 +50,52 @@ In the config file, can specify whether to run FastQC before preprocessing, afte
 By default, will only run after preprocessing.
 """
 
-if not config['fastqc']:
-    rule preprocess:
-        input: [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
-elif config['fastqc'] == 'after':
+fastqc_config = config.get('fastqc', '')
+
+if not fastqc_config:
     rule preprocess:
         input:
-            clean_files = [OUTDIR/f'clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES],
-            fastqc = [OUTDIR/f'fastqc_clean/{sample}.fastqc_clean.done' for sample in SAMPLES]
+            [
+                f'{OUTDIR}/clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES]
 
-elif config['fastqc'] == 'before':
+elif fastqc_config == 'after':
     rule preprocess:
-        input: OUTDIR/'fastqc/before.multiqc.done'
+        input:
+            clean_files = [
+                f'{OUTDIR}/clean_reads/{sample}/{sample}.qc.done' for sample in SAMPLES],
+            fastqc = [
+                f'{OUTDIR}/fastqc_clean/{sample}.fastqc_clean.done' for sample in SAMPLES]
+
+elif fastqc_config == 'before':
+    rule preprocess:
+        input: f'{OUTDIR}/fastqc/before.multiqc.done'
 elif config['fastqc'] == 'both':
     rule preprocess:
-        input: OUTDIR/'fastqc/both.multiqc.done'
+        input: f'{OUTDIR}/fastqc/both.multiqc.done'
 else:
-    print(f'{config["fastqc"]} is not a recognized option for fastqc')
+    print(f'{fastqc_config} is not a recognized option for fastqc')
     sys.exit(1)
 
-
 rule merge_fastq:
-    input: [OUTDIR/f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
-
+    input:
+        [OUTDIR /
+            f'merged_reads/{sample}/{sample}.merge.done' for sample in SAMPLES]
 
 """
 ASSEMBLY and ANNOTATION
+
 In the config specify whether to use spades or unicycler. Default will be spades
+
 """
-print(SAMPLES)
-if config['assembler'] == 'spades':
-    GFFs =[OUTDIR/f'assembly/{sample}/{sample}.scaffolds.min200.prokka.done' for sample in SAMPLES]
-elif config['assembler'] == 'unicycler':
-    GFFs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/assembly.prokka.done' for sample in SAMPLES]
+
+assembler_config = config.get('assembler', 'spades')
+assembler_mode_config = config.get('unimode', '')
+if assembler_config == 'spades':
+    GFFs = [
+        f'{OUTDIR}/assembly/{sample}/{sample}.scaffolds.min200.prokka.done' for sample in SAMPLES]
+elif assembler_config == 'unicycler':
+    GFFs = [
+        f'{OUTDIR}/unicycler/{assembler_mode_config}/{sample}/assembly.prokka.done' for sample in SAMPLES]
 else:
     GFFs = []
 
@@ -80,38 +103,52 @@ rule assemble:
     input: GFFs + [str(g).replace("prokka", "genomad") for g in GFFs]
 
 
+gapseq_files = [f'{OUTDIR}/gapseq_output/{f.stem}/{f.stem}-Transporter.tbl' for f in (
+    OUTDIR/"gapseq_data").glob("*.faa") if 'all-strains' not in f.stem]
+print(gapseq_files)
+rule run_gapseq:
+    # input: OUTDIR/"gapseq_output/Rahnella_38_1_0.25/Rahnella_38_1_0.25-all-Pathways.tbl"
+    input: gapseq_files
+
+
 """
+
 Variant Calling
+
 """
 
 VCFs = []
 BAMs = []
+reference_config = config.get('reference', {})
 
-for ref, samples in config['reference'].items():
-    if ref == 'refDir':
+for ref, samples in reference_config.items():
+    if ref == 'refDir' or ref == 'refgbk':
         continue
-    BAMs += [OUTDIR / f'bams/{sample}/{sample}_to_{ref}.bam' for sample in samples]
-    VCFs += [OUTDIR / f'VCF/{sample}/{sample}_to_{ref}.isolate.filtered.vcf' for sample in samples]
-    
-print(BAMs)
+    BAMs += [f'{OUTDIR}/bams/{sample}/{sample}_to_{ref}.bam' for sample in samples]
+    VCFs += [f'{OUTDIR}/VCF/{sample}/{sample}_to_{ref}.isolate.filtered.vcf' for sample in samples]
+
+
 rule align:
     input: BAMs
 
 rule varcall:
     input: VCFs
 
-breseq_done = [OUTDIR/f'breseq/{sample}.breseq.done' for sample in SAMPLES]
+breseq_done = [f'{OUTDIR}/breseq/{sample}.breseq.done' for sample in SAMPLES]
 rule breseq:
     input: breseq_done
 
 """
 Annotation
+
 """
-db=config['database']
-if config['assembler'] == 'spades':
-    FAAs =[OUTDIR/f'assembly/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
-elif config['assembler'] == 'unicycler':
-    FAAs = [OUTDIR/f'unicycler/{config["unimode"]}/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
+db = config.get('database', '')
+if assembler_config == 'spades':
+    FAAs = [
+        f'{OUTDIR}/assembly/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
+elif assembler_config == 'unicycler':
+    FAAs = [
+        f'{OUTDIR}/unicycler/{assembler_mode_config}/{sample}/{db}/{sample}.{db}.done' for sample in SAMPLES]
 else:
     FAAs = []
 

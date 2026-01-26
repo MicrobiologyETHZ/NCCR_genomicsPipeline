@@ -1,0 +1,12 @@
+name: metaflye
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - flye=2.9.6
+  - bwa
+  - samtools
+  - pilon=1.24
+  - openjdk=11
+  - seqkit
+  - seqtk

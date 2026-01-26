@@ -8,7 +8,7 @@ def get_merged(wildcards):
     else:
         return  ''
 
-READ_DIR = 'merged_reads' if config['merged'] else 'clean_reads'
+READ_DIR = 'merged_reads' if config.get('merged', '') else 'clean_reads'
 
 rule assemble_wga:
         input:
@@ -50,14 +50,14 @@ rule unicycler_short:
         fq2=OUTDIR / READ_DIR / '{sample}/{sample}.2.fq.gz',
         s=OUTDIR / READ_DIR / '{sample}/{sample}.s.fq.gz',
     output:
-        marker = touch(OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/{sample}.unicycler.done'),
-        assembly = OUTDIR/f'unicycler/{config["unimode"]}'/'{sample}/assembly.fasta'
+        marker = touch(OUTDIR/f'unicycler/{config.get("unimode", "")}'/'{sample}/{sample}.unicycler.done'),
+        assembly = OUTDIR/f'unicycler/{config.get("unimode", "")}'/'{sample}/assembly.fasta'
     params:
-        outdir = lambda wildcards: OUTDIR/f'unicycler/{config["unimode"]}/{wildcards.sample}',
-        qerrfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config["unimode"]}.qerr',
-        qoutfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config["unimode"]}.qout',
+        outdir = lambda wildcards: OUTDIR/f'unicycler/{config.get("unimode", "")}/{wildcards.sample}',
+        qerrfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config.get("unimode", "")}.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/unicycler/{wildcards.sample}.unicycler.{config.get("unimode", "")}.qout',
         threads = 24,
-        mode = config["unimode"],
+        mode = config.get('unimode', ''),
         scratch = 6000,
         mem = 7700,
         time = 1400
@@ -98,7 +98,7 @@ rule prokka:
         '--force &> {log.log} '
 
 
-if config['assembler'] == 'spades': # todo rethink cleanup
+if config.get("assembler", 'spades') == 'spades': # todo rethink cleanup
 
     rule assembly_cleanup:
         input:
@@ -170,7 +170,7 @@ if config['assembler'] == 'spades': # todo rethink cleanup
             eval "$command"
             '''
 
-elif config['assembler'] == 'unicycler':
+elif config.get('assembler', 'spades') == 'unicycler':
     pass
 
 else:
@@ -179,7 +179,7 @@ else:
 
 
 rule run_genomad:
-    input: '{assembly}.fasta'
+    input: '{assembly}'
     output: marker = touch('{assembly}.genomad.done')
     params:
         sample=lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,

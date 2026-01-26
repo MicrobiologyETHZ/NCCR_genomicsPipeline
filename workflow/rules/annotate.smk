@@ -23,8 +23,8 @@ from pathlib import Path
 #         8
 #     shell:
 #         "gunzip {input} "
-
-if config['database'] == 'eggnog':
+db = config.get('db', 'eggnog')
+if db == 'eggnog':
     rule emapper:
         input: faa = OUTDIR/"{assembly}/{sample}/{sample}.faa"
         #input: faa = OUTDIR/"{assembly}/{sample}/prokka/{sample}.faa"
@@ -49,7 +49,7 @@ if config['database'] == 'eggnog':
             '--cpu 16 --temp_dir {params.outdir} '
             ' -m diamond --data_dir {params.dataDir} &> {log.log} '
 
-elif config['database'] == 'kegg':
+elif db == 'kegg':
     rule kegg:
         input: faa = OUTDIR/'{assembly}/{sample}/{sample}.faa'
         output: touch(OUTDIR/'{assembly}/{sample}/kegg/{sample}.kegg.done')
@@ -78,6 +78,44 @@ elif config['database'] == 'kegg':
 else:
     print("Error: Please choose a valid database for functional annotation. The options are eggnog or kegg.")
     sys.exit(1)
+
+
+rule gapseq_find:
+    input:
+        faa = OUTDIR/"gapseq_data/{genome_prefix}.faa"
+    output:
+        #pathways = OUTDIR/"gapseq_output/{genome_prefix}/{genome_prefix}-all-Pathways.tbl",
+        tcs = OUTDIR/"gapseq_output/{genome_prefix}/{genome_prefix}-Transporter.tbl",
+        #reactions = "gapseq_output/{genome}/{genome}-all-Reactions.tbl",
+        #transporter = "gapseq_output/{genome}/{genome}-Transporter.tbl"
+    params:
+        outdir = lambda wildcards: OUTDIR/f"gapseq_output/{wildcards.genome_prefix}",
+        genome_id = lambda wildcards: wildcards.genome_prefix,
+        scratch = 1000,
+        mem = 4000,
+        time = 235,
+        qerrfile = lambda wildcards: OUTDIR/f'logs/{wildcards.genome_prefix}.gapseq.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/{wildcards.genome_prefix}.gapseq.qout'
+    conda:
+        "gapseq"  
+    log:
+        OUTDIR/"logs/gapseq_find/{genome_prefix}.log"
+    threads: 8
+    shell:
+        """
+        mkdir -p {params.outdir}
+        cd {params.outdir}
+        
+        #gapseq find -p all -b 200 -t Bacteria -m Bacteria \
+        #   {input.faa} &> {log}
+        gapseq find-transport {input.faa}  &> {log}
+
+        # Rename outputs to include genome name
+        #mv *-all-Pathways.tbl {params.genome_id}-all-Pathways.tbl || true
+        #mv *-all-Reactions.tbl {params.genome_id}-all-Reactions.tbl || true
+        mv *Transporter.tbl {params.genome_id}-Transporter.tbl || true
+        """
+
 
 
 #
