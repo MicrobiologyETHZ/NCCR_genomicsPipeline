@@ -38,7 +38,6 @@ include: "rules/annotate.smk"
 include: "rules/call_variants.smk"
 # include: "rules/typing.smk"
 # include: "rules/profile.smk"
-# include: "rules/count.smk"
 
 rule find_phage:
     input: [f'{sample}.genomad.done' for sample in SAMPLES]
@@ -249,27 +248,8 @@ rule annotate:
 # rule whatisit:
 #     input: [OUTDIR/f'mash/{sample}/{sample}.distances.tab' for sample in SAMPLES]
 #
-# rule phylogeny:
-#     input: OUTDIR/f'phylophlan/{config["projectName"]}/output_isolates/RAxML_bestTree.input_isolates.tre'
-#
-#
-# rule findAb:
-#     input: OUTDIR/f'ariba/summary.done'
-#
-# rule type:
-#     input: [OUTDIR/f'typing/{sub}/{sub}.mlst' for sub in SAMPLES]
-#     # env doesn't work on cluster
-#
-#
-# rule serotype:
-#     input: [OUTDIR/f'typing/{sub}/output.tsv' for sub in SAMPLES]
-#
-#
 # rule anVar2:
 #     input: [OUTDIR/f'VCF/{sub}/{sub}.AF.snpEff.done' for sub in SAMPLES]
-#
-# rule pangenome:
-#     input: [OUTDIR/f'panX/data/{config["projectName"]}/vis/strain_tree.nwk']
 
 # rule gzip:
 #     input: '{sample}.fasta',
