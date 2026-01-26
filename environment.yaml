@@ -1,0 +1,32 @@
+# NCCR Genomics Pipeline - Development Environment
+# Refactored version targeting Python 3.12 and Snakemake 9
+#
+# Usage:
+#   conda env create -f environment.yaml
+#   conda activate nccrpipe
+#   pip install -e .
+
+name: nccrpipe
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Core dependencies
+  - python=3.12.*
+  - snakemake>=9.0
+  - pyyaml>=6.0
+  - click>=8.0
+  - pandas>=2.0
+
+  # Development dependencies
+  - pytest>=7.0
+  - pytest-cov
+  - pylint
+
+  # Utilities
+  - pip
+
+  # Install package in development mode via pip
+  - pip:
+    - -e .
