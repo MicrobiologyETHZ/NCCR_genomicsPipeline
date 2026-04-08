@@ -1,0 +1,44 @@
+# Assembly + Annotation Config
+# Use with:
+#   nccrPipe assemble -c configs/assembly_config.yaml [--local]
+#   nccrPipe annotate -c configs/assembly_config.yaml [--local]
+
+# --- Input / Output ---
+data_dir: /path/to/raw/fastq         # directory containing raw FASTQ files
+output_dir: /path/to/output
+samples: /path/to/samples.csv        # generate with: nccrPipe samples -c configs/assembly_config.yaml
+
+# FastQ filename extensions
+fq_fwd: _R1.fq.gz
+fq_rvr: _R2.fq.gz
+
+# Sample name sanitisation (strip extra metadata from filenames)
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+
+# --- Preprocessing ---
+qc: yes                  # run BBDuk adapter/quality trimming
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+se: false                # single-end reads?
+merged: false
+merge_replicates: false
+fastqc: no               # options: no, before, after, both
+
+# Adapter and PhiX references (bundled in the repo)
+adapters: data/adapters/adapters.fa
+phix: data/adapters/phix174_ill.ref.fa.gz
+
+# --- Assembly ---
+assembler: spades        # options: spades, unicycler
+unimode: normal          # unicycler mode (only used when assembler: unicycler)
+
+# --- Annotation (nccrPipe annotate) ---
+database: eggnog         # options: eggnog  (kegg not supported for external use)
+eggnog_db: /path/to/eggnog-data   # download with: download_eggnog_data.py
+
+# --- Phage detection (nccrPipe find_phage — optional, separate step) ---
+# genomad_db: /path/to/genomad_db  # download with: genomad download ...

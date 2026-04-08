@@ -23,7 +23,7 @@ from pathlib import Path
 #         8
 #     shell:
 #         "gunzip {input} "
-db = config.get('db', 'eggnog')
+db = config.get('database', 'eggnog')
 if db == 'eggnog':
     rule emapper:
         input: faa = OUTDIR/"{assembly}/{sample}/{sample}.faa"
@@ -32,7 +32,7 @@ if db == 'eggnog':
         params:
             sample = "{sample}",
             outdir = lambda wildcards: OUTDIR/f'{wildcards.assembly}/{wildcards.sample}/eggnog',
-            dataDir = "/science/ansintsova/eggnog-data/", # todo put this into config
+            dataDir = config.get('eggnog_db', ''),
             scratch = 1000,
             mem = 4000,
             time = 235,

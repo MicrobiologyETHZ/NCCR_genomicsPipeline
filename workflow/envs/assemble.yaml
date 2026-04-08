@@ -2,14 +2,24 @@ channels:
   - conda-forge
   - bioconda
   - defaults
+  - r
 dependencies:
-  - python=3.6
   - unicycler=0.5.0
-  - spades>=3.14
+  - spades[version='>=3.14']
   - biopython=1.79
-  - assembly-stats==1.0.*
+  - assembly-stats=1.0
+  - python=3.11
+  - ca-certificates
+  - openssl
+  - pilon
+  - quast
+  - fastani
+  - certifi
+  - repeatmasker
+  - seqkit
+  - bakta
   - prokka=1.14.6
-  - pilon=1.24
+
 
 
 

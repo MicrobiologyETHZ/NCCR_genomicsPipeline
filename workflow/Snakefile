@@ -99,7 +99,7 @@ else:
     GFFs = []
 
 rule assemble:
-    input: GFFs + [str(g).replace("prokka", "genomad") for g in GFFs]
+    input: GFFs
 
 
 gapseq_files = [f'{OUTDIR}/gapseq_output/{f.stem}/{f.stem}-Transporter.tbl' for f in (

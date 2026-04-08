@@ -22,7 +22,7 @@ conda activate nccrPipe
 pip install -e .
 ```
 
-Conda environments for individual pipeline steps are in `workflow/envs/` and are created automatically on first run via `--use-conda`.
+Conda environments for individual pipeline steps are in `workflow/envs/` and are NOT created automatically. Create them first. 
 
 
 ## Running Breseq
@@ -211,14 +211,89 @@ Open `output/index.html` in a browser to view results.
 - Breseq requires a reference with annotation (GenBank preferred). FASTA-only references will not produce gene-level output.
 
 
+## Running Genome Assembly
+
+### 1. Prepare input files
+
+**Raw reads** — paired-end FASTQ files (one pair per sample, anywhere on disk):
+
+```
+/path/to/raw/
+├── Sample1_R1.fq.gz
+├── Sample1_R2.fq.gz
+├── Sample2_R1.fq.gz
+└── Sample2_R2.fq.gz
+```
+
+**Sample sheet** — CSV with columns `sample`, `unit`, `fastq_1`, `fastq_2`. Generate automatically:
+
+```bash
+nccrPipe samples -c configs/assembly_config.yaml
+```
+
+### 2. Create a config file
+
+Copy `configs/assembly_config.yaml` and fill in your paths:
+
+```yaml
+data_dir: /path/to/raw/fastq
+output_dir: /path/to/output
+samples: /path/to/samples.csv
+
+adapters: data/adapters/adapters.fa     # bundled in the repo
+phix: data/adapters/phix174_ill.ref.fa.gz
+
+assembler: spades   # or unicycler
+```
+
+### 3. Run assembly (SPAdes + Prokka)
+
+```bash
+# Dry run first
+nccrPipe assemble -c configs/assembly_config.yaml --dry
+
+# Local machine
+nccrPipe assemble -c configs/assembly_config.yaml --local
+
+# SLURM cluster
+nccrPipe assemble -c configs/assembly_config.yaml
+```
+
+### 4. Run functional annotation (eggNOG-mapper)
+
+Requires the eggNOG database.
+
+Add to your config:
+
+```yaml
+database: eggnog
+eggnog_db: /path/to/eggnog-data
+```
+
+Then run:
+
+```bash
+nccrPipe annotate -c configs/assembly_config.yaml --local
+```
+
+### 5. Outputs
+
+```
+output_dir/
+├── clean_reads/{sample}/          # QC-filtered reads
+├── assembly/{sample}/
+│   ├── {sample}.scaffolds.min200.fasta   # assembled scaffolds
+│   ├── {sample}.gff                      # Prokka annotation
+│   └── {sample}.faa                      # protein sequences
+└── logs/
+```
+
+
 ## Running Other Pipeline Steps
 
 ```bash
 # Preprocessing only
 nccrPipe isolate -c /path/to/config.yaml -m preprocess --local
-
-# Genome assembly
-nccrPipe isolate -c /path/to/config.yaml -m assemble
 
 # BCFtools variant calling (SNP calling against reference FASTA)
 nccrPipe isolate -c /path/to/config.yaml -m call_variants

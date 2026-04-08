@@ -61,19 +61,23 @@ def samples(configfile, fastq_dir, sample_file, read2_extension, read1_extension
         )
 
 
+PARTITION_OPTION = click.option('--partition', '-p', default='institute', show_default=True,
+                               help="SLURM partition to use for cluster jobs")
+
 # Preprocess
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def clean(config, local, dry, no_conda):
+@PARTITION_OPTION
+def clean(config, local, dry, no_conda, partition):
     click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'preprocess', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'preprocess', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 # Assembly
@@ -84,13 +88,14 @@ def clean(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def assemble(config, local, dry, no_conda):
+@PARTITION_OPTION
+def assemble(config, local, dry, no_conda, partition):
     click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'assemble', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'assemble', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -100,13 +105,14 @@ def assemble(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def align(config, local, dry, no_conda):
+@PARTITION_OPTION
+def align(config, local, dry, no_conda, partition):
     click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'align', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'align', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -116,13 +122,14 @@ def align(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def call(config, local, dry, no_conda):
+@PARTITION_OPTION
+def call(config, local, dry, no_conda, partition):
     click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'breseq', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'breseq', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -132,13 +139,14 @@ def call(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def funcall(config, local, dry, no_conda):
+@PARTITION_OPTION
+def funcall(config, local, dry, no_conda, partition):
     click.echo("Running fungal variant calling pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'varcall', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'varcall', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -148,13 +156,14 @@ def funcall(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def annotate(config, local, dry, no_conda):
+@PARTITION_OPTION
+def annotate(config, local, dry, no_conda, partition):
     click.echo("Running Assembly Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'annotate', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'annotate', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -164,14 +173,15 @@ def annotate(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def gapseq(config, local, dry, no_conda):
+@PARTITION_OPTION
+def gapseq(config, local, dry, no_conda, partition):
     click.echo("Running Gapseq find Pipeline")
     click.echo(f"Config file: {config}")
     # click.echo("Samples found: ")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'run_gapseq', smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, 'run_gapseq', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -183,14 +193,15 @@ def gapseq(config, local, dry, no_conda):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
-def isolate(config, method, local, dry, no_conda):
+@PARTITION_OPTION
+def isolate(config, method, local, dry, no_conda, partition):
     click.echo("Running Genomics Pipeline")
     click.echo(f"Config file: {config}")
     # click.echo("Samples found: ")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, method, smk_file, dry, local, no_conda)
+    cmd = snakemake_cmd(config, method, smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
 
@@ -209,12 +220,13 @@ def unlock(config):
 @click.option('-m', '--method', default='metaflye', help='Workflow to run [metaflye]')
 @click.option('--local', is_flag=True, help='Run locally')
 @click.option('--dry', is_flag=True, help='Dry run')
-def metagenome(config, method, local, dry):
+@PARTITION_OPTION
+def metagenome(config, method, local, dry, partition):
     """Run metagenomic assembly comparison"""
     click.echo("Running Metagenomic Workflow")
     click.echo(f"Running {method}")
     smk_file = Path(__file__).parent / "Snakefile_metagenome"
-    cmd = snakemake_cmd(config, method, smk_file, dry, local)
+    cmd = snakemake_cmd(config, method, smk_file, dry, local, partition=partition)
     click.echo(" ".join(cmd))
 
 
@@ -222,15 +234,17 @@ def metagenome(config, method, local, dry):
 @click.option('-c', '--config', required=True, help='Configuration file')
 @click.option('--local', is_flag=True, help='Run locally')
 @click.option('--dry', is_flag=True, help='Dry run')
-def phage(config, local, dry):
+@PARTITION_OPTION
+def phage(config, local, dry, partition):
     """Run metagenomic assembly comparison"""
     click.echo("Running Genomad Workflow")
     smk_file = Path(__file__).parent / "Snakefile_test"
-    cmd = snakemake_cmd(config, "find_phage", smk_file, dry, local)
+    cmd = snakemake_cmd(config, "find_phage", smk_file, dry, local, partition=partition)
     click.echo(" ".join(cmd))
 
 
-def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False):
+def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False, partition='institute'):
+    config = str(Path(config).resolve())
     if dry:
         cmd = shlex.split(
             f'snakemake -s {smk_file} --configfile {config} -np {analysis} ')
@@ -241,7 +255,7 @@ def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False):
         # SGE
         # rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
         # Slurm
-        rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; sbatch -t {params.time} --mem-per-cpu={params.mem} -n {threads} -o {params.qoutfile} -e {params.qerrfile} --partition institute"'
+        rstring = f'"DIR=$(dirname {{params.qoutfile}}); mkdir -p \\"${{{{DIR}}}}\\"; sbatch -t {{params.time}} --mem-per-cpu={{params.mem}} -n {{threads}} -o {{params.qoutfile}} -e {{params.qerrfile}} --partition {partition}"'
         if no_conda:
             part1 = shlex.split(
                 f'snakemake --configfile {config} -s {smk_file} -k --cluster ')

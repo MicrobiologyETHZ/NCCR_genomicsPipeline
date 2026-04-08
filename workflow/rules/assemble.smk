@@ -187,7 +187,7 @@ rule run_genomad:
         scratch=1000,
         mem=4000,
         time=800,
-        db = '/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/EAN/PROPHAGE_REFSEQ_EAN/scratch/databases/genomad_db',
+        db = config.get('genomad_db', ''),
         qerrfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qerr',
         qoutfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qout'
     conda:
