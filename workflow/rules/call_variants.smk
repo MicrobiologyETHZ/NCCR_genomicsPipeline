@@ -13,20 +13,30 @@
 
 REFDIR = Path(config.get('reference', {}).get('refDir', ''))
 REFGBK = Path(config.get('reference', {}).get('refgbk', ''))
+REFGFF = config.get('reference', {}).get('refgff', '')
+
+_breseq_cfg = config.get('breseq', {})
+BRESEQ_POLY = '-p' if _breseq_cfg.get('polymorphic', True) else ''
+BRESEQ_LEN = f'-l {_breseq_cfg["limit_fold_coverage"]}' if _breseq_cfg.get('limit_fold_coverage') else ''
+BRESEQ_COV = f'-m {_breseq_cfg["min_mapping_quality"]}' if _breseq_cfg.get('min_mapping_quality') else ''
+BRESEQ_REFS = f'-r {REFGBK}' + (f' -r {REFGFF}' if REFGFF else '')
 
 rule run_breseq:
     input: fq1=OUTDIR / 'clean_reads/{sample}/{sample}.1.fq.gz',
            fq2=OUTDIR / 'clean_reads/{sample}/{sample}.2.fq.gz',
-    output: 
+    output:
             marker = touch(OUTDIR / 'breseq/{sample}.breseq.done')
     params:
         out_dir = lambda wildcards: OUTDIR/f'breseq/{wildcards.sample}',
-        gbk = REFGBK,
+        poly = BRESEQ_POLY,
+        read_len = BRESEQ_LEN,
+        min_cov = BRESEQ_COV,
+        refs = BRESEQ_REFS,
         qerrfile=lambda wildcards: OUTDIR / f'logs/{wildcards.sample}/{wildcards.sample}.breseq.qerr',
         qoutfile=lambda wildcards: OUTDIR / f'logs/{wildcards.sample}/{wildcards.sample}.breseq.qout',
         scratch=6000,
         mem=7700,
-        time=1400   
+        time=1400
     conda:
         'call_variants'
     log:
@@ -34,12 +44,8 @@ rule run_breseq:
     threads:
         4
     shell:
-        """
-        #breseq -l 120 -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
-        # Polymorphic
-        breseq -p -j 8 -o {params.out_dir} -r {params.gbk} {input.fq1} {input.fq2}
-
-        """
+        "breseq {params.poly} -j 8 {params.read_len} {params.min_cov} "
+        "-o {params.out_dir} {params.refs} {input.fq1} {input.fq2}"
 
 
 

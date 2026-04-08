@@ -1,13 +1,20 @@
 projectName: Test
 
-dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch/Strains_sequencing
-outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch
-samples: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/slack/dhoces/scratch/04-10-22-theta_assemble.csv
+dataDir: tests/test_data
+outDir: tests
+samples: tests/test_data/samples.csv
 
 
 species:
-fq_fwd:
-fq_rvr:
+
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+se: false
+
 
 
 #Preprocessing

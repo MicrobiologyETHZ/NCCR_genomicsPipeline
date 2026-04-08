@@ -35,7 +35,7 @@ def main():
                    "all elements before this index (1-based) will be joined to create final sample name.",)
 def samples(configfile, fastq_dir, sample_file, read2_extension, read1_extension, sanitise_name,
             sanitise_name_delimiter, sanitise_name_index):
-    click.echo("Running Eukaryotic RNASeq Pipeline")
+    click.echo("Generating samples file from fastq directory...")
     if configfile:
         click.echo(f"Config file: {configfile}")
         with open(configfile) as file:

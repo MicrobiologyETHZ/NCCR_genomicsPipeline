@@ -68,7 +68,7 @@ elif fastqc_config == 'after':
 elif fastqc_config == 'before':
     rule preprocess:
         input: f'{OUTDIR}/fastqc/before.multiqc.done'
-elif config['fastqc'] == 'both':
+elif fastqc_config == 'both':
     rule preprocess:
         input: f'{OUTDIR}/fastqc/both.multiqc.done'
 else:

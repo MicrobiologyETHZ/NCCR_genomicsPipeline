@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def get_merged(wildcards):
-    if config['merged']== True:
+    if config.get('merged', False) == True:
         return '--pe1-m ' + str(OUTDIR) + f'/merged_reads/{wildcards.sample}/{wildcards.sample}.m.fq.gz '
     else:
         return  ''

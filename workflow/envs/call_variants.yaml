@@ -2,8 +2,17 @@ channels:
   - conda-forge
   - bioconda
   - defaults
+  - r
 dependencies:
   - samtools==1.13
-  - bwa==0.7.*
+  - bwa=0.7
   - bcftools
   - gatk4==4.2
+  - bamstats
+  - ca-certificates
+  - openssl
+  - breseq
+  - vcftools
+  - plink
+  - treemix
+  - instrain

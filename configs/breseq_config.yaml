@@ -1,0 +1,40 @@
+projectName: MyProject
+
+# Input/output paths
+dataDir: /path/to/raw/fastq/files
+outDir: /path/to/output
+samples: /path/to/samples.csv   # CSV with columns: sample, unit, fastq_1, fastq_2
+
+# Sample specs
+fq_fwd: _R1.fq.gz   # Forward read filename suffix
+fq_rvr: _R2.fq.gz   # Reverse read filename suffix
+se: false
+
+# Sample name sanitisation (used by 'nccrPipe samples' to derive sample names from filenames)
+# e.g. Sample1_LIBXXX_R1.fq.gz with delimiter '_' and index 1 -> sample name 'Sample1'
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+
+# Preprocessing (required before breseq)
+qc: yes
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+merge_replicates: false
+
+# Adapter/PhiX references for preprocessing
+adapters: /path/to/adapters.fa
+phix: /path/to/phix174_ill.ref.fa.gz
+
+# Reference genome
+reference:
+  refgbk: /path/to/reference.gbk   # GenBank (.gbk) file — required for breseq
+  refgff: ''                        # Optional: separate GFF annotation; leave empty to use only refgbk
+
+# Breseq options
+breseq:
+  polymorphic: true    # true = polymorphic mode (-p); false = clonal/consensus mode
+  limit_fold_coverage: 200     # -l: downsample reads above this fold-coverage; remove or set to null to use breseq default
+  min_mapping_quality: 30      # -m: minimum mapping quality to use a read; remove or set to null to use breseq default
