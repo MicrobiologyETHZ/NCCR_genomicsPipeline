@@ -1,13 +1,13 @@
 projectName: MyProject
 
 # Input/output paths
-dataDir: /path/to/raw/fastq/files
-outDir: /path/to/output
-samples: /path/to/samples.csv   # CSV with columns: sample, unit, fastq_1, fastq_2
+dataDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/soft/NCCR_genomicsPipeline/tests/test_data
+outDir: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/soft/NCCR_genomicsPipeline/tests/output
+samples: /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/soft/NCCR_genomicsPipeline/tests/test_data/samples.csv   # CSV with columns: sample, unit, fastq_1, fastq_2
 
 # Sample specs
-fq_fwd: _R1.fq.gz   # Forward read filename suffix
-fq_rvr: _R2.fq.gz   # Reverse read filename suffix
+fq_fwd: _1.fq.gz   # Forward read filename suffix
+fq_rvr: _2.fq.gz   # Reverse read filename suffix
 se: false
 
 # Sample name sanitisation (used by 'nccrPipe samples' to derive sample names from filenames)
@@ -25,8 +25,12 @@ minlen: 45
 merge_replicates: false
 
 # Adapter/PhiX references for preprocessing
-adapters: /path/to/adapters.fa
-phix: /path/to/phix174_ill.ref.fa.gz
+# Standard parameters. Dont change these!!!
+adapters: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/adapters.fa'
+phix: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/phix174_ill.ref.fa.gz'
+bbmap_human_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/human_bbmap_ref/'
+bbmap_mouse_ref: '/nfs/cds-shini.ethz.ch/exports/biol_micro_cds_gr_sunagawa/SequenceStorage/resources/mouse_bbmap_ref/'
+
 
 # Reference genome
 reference:
