@@ -1,22 +1,23 @@
+from pathlib import Path
 from scripts.get_vars import *
 import sys
 import pandas as pd
 
 
-DATADIR = config.get('data_dir', 'data')
-OUTDIR = config.get('output_dir', 'output')
+def _resolve(p):
+    """Resolve a config path to absolute, relative to the workflow directory."""
+    p = Path(p)
+    return p if p.is_absolute() else (Path(workflow.basedir) / p).resolve()
 
-# configfile: "configs/basic_config.yaml"
 
-# DATADIR = Path(config['dataDir'])
-# OUTDIR = Path(config['outDir'])
-# SAMPLEFILE = Path(config['sampleFile'])
-# SAMPLES = get_subsamples(SAMPLEFILE)
-
-# Sample Name, Unit, forward reads, reverse reads
+DATADIR  = _resolve(config.get('dataDir',  config.get('data_dir',  'data')))
+OUTDIR   = _resolve(config.get('outDir',   config.get('output_dir', 'output')))
+ADAPTERS = _resolve(config.get('adapters', ''))
+PHIX     = _resolve(config.get('phix',     ''))
 
 samples_file = config.get('samples', '')
 if samples_file:
+    samples_file = str(_resolve(samples_file))
     sampleInfo = pd.read_csv(samples_file)
     samples_to_merge = (sampleInfo.loc[sampleInfo.groupby('sample')
                         .unit.filter(lambda x: x.nunique() > 1).index]['sample']

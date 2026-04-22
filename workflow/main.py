@@ -40,9 +40,17 @@ def samples(configfile, fastq_dir, sample_file, read2_extension, read1_extension
         click.echo(f"Config file: {configfile}")
         with open(configfile) as file:
             config = yaml.load(file, Loader=yaml.FullLoader)
+        # Paths in configs are relative to workflow/ (where snakemake runs).
+        # Resolve them to absolute so glob works regardless of the user's CWD.
+        workflow_dir = Path(__file__).parent
+        def resolve_path(p):
+            p = Path(p)
+            return p if p.is_absolute() else (workflow_dir / p).resolve()
+        abs_fastq_dir = resolve_path(config['dataDir'])
+        abs_samplesheet = resolve_path(config['samples'])
         fds.fastq_dir_to_samplesheet(
-            fastq_dir=config['dataDir'],
-            samplesheet_file=config["samples"],
+            fastq_dir=str(abs_fastq_dir),
+            samplesheet_file=str(abs_samplesheet),
             read1_extension=config['fq_fwd'],
             read2_extension=config['fq_rvr'],
             sanitise_name=config['sanitise_name'],
@@ -72,7 +80,7 @@ PARTITION_OPTION = click.option('--partition', '-p', default='institute', show_d
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 @PARTITION_OPTION
 def clean(config, local, dry, no_conda, partition):
-    click.echo("Running Assembly Pipeline")
+    click.echo("Running Preprocessing Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
@@ -80,9 +88,8 @@ def clean(config, local, dry, no_conda, partition):
     cmd = snakemake_cmd(config, 'preprocess', smk_file, dry, local, no_conda, partition)
     click.echo(" ".join(cmd))
 
+
 # Assembly
-
-
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
 @click.option('--local',  is_flag=True, help="Run on local machine")
@@ -107,7 +114,7 @@ def assemble(config, local, dry, no_conda, partition):
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 @PARTITION_OPTION
 def align(config, local, dry, no_conda, partition):
-    click.echo("Running Assembly Pipeline")
+    click.echo("Running Align Command")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
@@ -124,7 +131,7 @@ def align(config, local, dry, no_conda, partition):
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 @PARTITION_OPTION
 def call(config, local, dry, no_conda, partition):
-    click.echo("Running Assembly Pipeline")
+    click.echo("Running Breseq Variant Calling Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
@@ -141,7 +148,7 @@ def call(config, local, dry, no_conda, partition):
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 @PARTITION_OPTION
 def funcall(config, local, dry, no_conda, partition):
-    click.echo("Running fungal variant calling pipeline")
+    click.echo("Running Eukaryotic Variant Calling Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
@@ -195,7 +202,7 @@ def gapseq(config, local, dry, no_conda, partition):
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
 @PARTITION_OPTION
 def isolate(config, method, local, dry, no_conda, partition):
-    click.echo("Running Genomics Pipeline")
+    click.echo("Running Genomics Pipeline - UNDER CONSTRUCTION - use assemble")
     click.echo(f"Config file: {config}")
     # click.echo("Samples found: ")
     click.echo("Running {}".format(
@@ -244,7 +251,16 @@ def phage(config, local, dry, partition):
 
 
 def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False, partition='institute'):
-    config = str(Path(config).resolve())
+    config_path = Path(config)
+    if not config_path.is_absolute():
+        resolved = config_path.resolve()
+        if not resolved.exists():
+            repo_root = Path(__file__).parent.parent
+            resolved = repo_root / config_path
+        config_path = resolved
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {config}")
+    config = str(config_path)
     if dry:
         cmd = shlex.split(
             f'snakemake -s {smk_file} --configfile {config} -np {analysis} ')

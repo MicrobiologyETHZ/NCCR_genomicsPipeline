@@ -1,9 +1,0 @@
-name: nccrPipe
-channels:
-  - defaults
-  - bioconda
-  - conda-forge
-dependencies:
-  - python==3.8.*
-  - snakemake>=7.1.*
-  - pyaml

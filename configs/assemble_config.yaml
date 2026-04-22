@@ -1,4 +1,4 @@
-projectName: MyProject
+projectName: MyAssembly
 
 # Input/output paths
 # All paths are relative to the workflow/ directory (where snakemake runs).
@@ -39,8 +39,6 @@ reference:
   refgbk: ../tests/test_data/ref.gbk   # GenBank (.gbk) file — required for breseq
   refgff: ''                        # Optional: separate GFF annotation; leave empty to use only refgbk
 
-# Breseq options
-breseq:
-  polymorphic: true    # true = polymorphic mode (-p); false = clonal/consensus mode
-  limit_fold_coverage: 200     # -l: downsample reads above this fold-coverage; remove or set to null to use breseq default
-  min_mapping_quality: 30      # -m: minimum mapping quality to use a read; remove or set to null to use breseq default
+# Assembler options
+
+assembler: unicycler

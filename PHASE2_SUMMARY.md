@@ -1,7 +1,7 @@
 # Phase 2 Complete: Code Cleanup
 
 **Date:** 2026-01-26
-**Status:** ✅ Complete
+**Status:** ✅ Core cleanup complete — a few items still pending (see below)
 
 ---
 
@@ -107,6 +107,14 @@ Currently still have all 12 commands - streamlining is next:
 - unlock ✅ Keep (utility)
 - metagenome ⚠️ Remove or repurpose
 - phage ✅ Keep
+
+---
+
+## Remaining Phase 2 Items (not yet done)
+
+1. Remove `workflow/rules/preprocess_old.smk` (267 lines, still present)
+2. Fix `yaml.load()` → `yaml.safe_load()` (main.py:42) — security issue
+3. Remove unused imports: `argparse`, `shutil` from main.py
 
 ---
 

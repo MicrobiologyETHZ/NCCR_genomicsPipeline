@@ -2,8 +2,8 @@
 
 **Goal:** Update pipeline to work with Snakemake 9 and Python 3.12, clean up code, and make it usable by other people.
 
-**Status:** Planning Phase
-**Last Updated:** 2026-01-26
+**Status:** Phase 3 in progress (Python 3.12 / Snakemake 9 prep)
+**Last Updated:** 2026-04-22
 
 ---
 
@@ -12,25 +12,24 @@
 
 ### 1.1 Create development/refactoring branch
 - [ ] Protect master branch
-- [ ] Create `refactor` or `dev` branch for all refactoring work
-- [ ] Users continue using master until refactoring is complete
+- [x] Create `refactor-snakemake9-python312` branch for all refactoring work
+- [x] Users continue using master until refactoring is complete
 
 ### 1.2 Document current state
-- [ ] Inventory all active workflows (isolate, rnaseq, metagenome, phage)
-- [ ] Identify which features are actively used vs. experimental
-- [ ] Document current dependencies and versions
-- [ ] List breaking changes in Snakemake 7→9 and Python 3.8→3.12
+- [x] Inventory all active workflows — see `REFACTORING_DECISIONS.md`
+- [x] Identify which features are actively used vs. experimental
+- [x] Document current dependencies and versions — see `CURRENT_STATE.md`
+- [x] List breaking changes in Snakemake 7→9 — see `SNAKEMAKE_MIGRATION.md`
 
 ### 1.3 Set up testing infrastructure
-- [ ] Create `tests/` directory
-- [ ] Add pytest framework
-- [ ] Create integration tests using existing test data
-- [ ] Establish CI/CD pipeline (GitHub Actions)
+- [x] Create `tests/` directory (unit/ and integration/ subdirs)
+- [x] Add pytest framework (`pytest.ini` present)
+- [x] Create initial tests and test data in `tests/test_data/`
+- [ ] Establish CI/CD pipeline (GitHub Actions — `.github/` present but not fully configured)
 
 ### 1.4 Version inconsistency audit
-- [ ] README says Snakemake 5.22, environment.yaml says >=7.1.*
-- [ ] Determine actual working version
-- [ ] Document Snakemake API changes needed for v9
+- [x] Confirmed: Snakemake 7.32.4, Python 3.8
+- [x] Document Snakemake API changes needed for v9 — see `SNAKEMAKE_MIGRATION.md`
 
 ---
 
@@ -38,19 +37,20 @@
 **Goal:** Remove technical debt without changing functionality
 
 ### 2.1 Remove development artifacts
-- [ ] Delete `scratch_pad.py` files
-- [ ] Remove commented-out code blocks (extensive in main.py, Snakefile)
-- [ ] Clean up unused imports
-- [ ] Remove old/experimental code paths
+- [x] Delete `scratch_pad.py` files (workflow/scripts and workflow/rules/scripts)
+- [x] Remove commented-out argparse code from main.py
+- [ ] Clean up unused imports (`argparse`, `shutil` still in main.py)
+- [x] Remove RNAseq, PanX, ARIBA, typing, PhyloPhlAn code — see `PHASE2_SUMMARY.md`
+- [ ] Remove `workflow/rules/preprocess_old.smk` (still present)
 
 ### 2.2 Fix immediate code quality issues
-- [ ] Fix deprecation warnings
+- [ ] Fix `yaml.load()` → `yaml.safe_load()` security issue (main.py:42)
 - [ ] Add proper logging instead of print statements
 - [ ] Standardize path handling (use pathlib consistently)
 - [ ] Fix hardcoded paths in configs
 
 ### 2.3 Organize file structure
-Current structure is messy. Target structure:
+In progress. New package structure started at `code/package/nccrPipe/`. Target structure:
 
 ```
 NCCR_genomicsPipeline/
@@ -86,7 +86,7 @@ NCCR_genomicsPipeline/
 
 ### 3.2 Update Python dependencies
 - [ ] Update Click to latest version
-- [ ] Update PyYAML to latest (yaml.load → yaml.safe_load)
+- [ ] Fix yaml.load → yaml.safe_load (main.py:42) — security issue
 - [ ] Update pandas, numpy if used
 - [ ] Pin versions appropriately
 

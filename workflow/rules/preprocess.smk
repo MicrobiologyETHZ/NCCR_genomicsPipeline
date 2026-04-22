@@ -1,20 +1,22 @@
 from pathlib import Path
 import pandas as pd
-
-DATADIR = Path(config.get("dataDir", ''))
-OUTDIR = Path(config.get('outDir', ''))
 import sys
 
-samples_file = config.get('samples', '')
-if samples_file:
-    sampleInfo = pd.read_csv(samples_file)
-    samples_to_merge = (sampleInfo.loc[sampleInfo.groupby('sample')
-                        .unit.filter(lambda x: x.nunique() > 1).index]['sample']
-                        .unique())
-    SAMPLES = pd.read_csv(samples_file, comment='#')['sample'].unique()
-else:
-    SAMPLES = config.get('sample', [])
-    sampleInfo = pd.DataFrame()
+# DATADIR, OUTDIR, ADAPTERS, PHIX, samples_file, sampleInfo, SAMPLES
+# are all set in the main Snakefile (with path resolution).
+# DATADIR = Path(config.get("dataDir", ''))
+# OUTDIR = Path(config.get('outDir', ''))
+
+# samples_file = config.get('samples', '')
+# if samples_file:
+#     sampleInfo = pd.read_csv(samples_file)
+#     samples_to_merge = (sampleInfo.loc[sampleInfo.groupby('sample')
+#                         .unit.filter(lambda x: x.nunique() > 1).index]['sample']
+#                         .unique())
+#     SAMPLES = pd.read_csv(samples_file, comment='#')['sample'].unique()
+# else:
+#     SAMPLES = config.get('sample', [])
+#     sampleInfo = pd.DataFrame()
 
 if len(SAMPLES) == 0:
     ValueError("Provide samples via 'samples'")

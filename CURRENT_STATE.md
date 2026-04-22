@@ -1,8 +1,8 @@
 # NCCR Genomics Pipeline - Current State Documentation
 
-**Date:** 2026-01-26
+**Date:** 2026-04-22 (updated; originally 2026-01-26)
 **Branch:** refactor-snakemake9-python312
-**Purpose:** Comprehensive inventory before refactoring
+**Purpose:** Comprehensive inventory — updated to reflect post-Phase-2 state
 
 ---
 
@@ -10,8 +10,7 @@
 
 ### Python & Snakemake Versions
 - **Current Python:** 3.8.* (as per environment.yaml)
-- **Current Snakemake:** >=7.1.* (as per environment.yaml)
-- **README Claims:** Snakemake 5.22 ⚠️ **INCONSISTENT**
+- **Current Snakemake:** 7.32.4 (CONFIRMED)
 - **Target Python:** 3.12.*
 - **Target Snakemake:** 9.x
 
@@ -84,40 +83,44 @@
 
 ## Snakemake Rule Files
 
-### Active Rules (12 files)
+### Active Rules (9 files, post Phase-2 cleanup)
 1. **preprocess.smk** - Read QC and preprocessing
-2. **preprocess_old.smk** - ⚠️ Old version (to be removed)
-3. **assemble.smk** - Genome assembly (SPAdes/Unicycler)
+2. **preprocess_old.smk** - ⚠️ Old version (still present, to be removed)
+3. **assemble.smk** - Genome assembly (SPAdes/Unicycler) — updated April 2026
 4. **annotate.smk** - Gene annotation (Prokka, eggNOG)
-5. **call_variants.smk** - Variant calling (BWA, breseq, bcftools)
+5. **call_variants.smk** - Variant calling (BWA, breseq, bcftools) — refactored April 2026
 6. **alignment.smk** - Read alignment
-7. **compare_genomes.smk** - Genome comparisons
-8. **count.smk** - Read counting
-9. **profile.smk** - Profiling tools
-10. **typing.smk** - Strain typing
-11. **quast.smk** - Assembly QC
-12. **hybrid_assembly.smk** - Hybrid assembly (PacBio/Illumina)
+7. **compare_genomes.smk** - Genome comparisons (PanX/PhyloPhlAn/ARIBA removed)
+8. **profile.smk** - Profiling tools
+9. **quast.smk** - Assembly QC
+10. **hybrid_assembly.smk** - Hybrid assembly (PacBio/Illumina)
+
+### Removed in Phase 2
+- ~~count.smk~~ — RNAseq read counting (removed)
+- ~~typing.smk~~ — MLST/serotyping (removed)
 
 ---
 
-## Conda Environments (16 files)
+## Conda Environments (13 files, post Phase-2 cleanup)
 
 1. **qc.yaml** - Preprocessing (BBMap, FastQC)
-2. **assemble.yaml** - Assembly tools (SPAdes, etc.)
+2. **assemble.yaml** - Assembly tools (SPAdes, etc.) — updated April 2026
 3. **unicycler.yaml** - Unicycler assembler
 4. **hybrid_assembly.yaml** - Hybrid assembly tools
 5. **annotate.yaml** - Prokka annotation
 6. **emapper.yaml** - eggNOG-mapper
-7. **call_variants.yaml** - Variant calling (BWA, bcftools, breseq)
+7. **call_variants.yaml** - Variant calling (BWA, bcftools, breseq) — updated April 2026
 8. **align.yaml** - Alignment tools
 9. **anVar.yaml** - Variant annotation (SnpEff)
 10. **compare_genomes.yaml** - FastANI, MUMmer
 11. **quast.yaml** - QUAST
-12. **typing.yaml** - MLST, serotyping
-13. **count.yaml** - Read counting
-14. **profile.yaml** - Profiling tools
-15. **orthoFinder.yaml** - OrthoFinder
-16. **panX.yaml** - Pan-genome analysis
+12. **profile.yaml** - Profiling tools
+13. **orthoFinder.yaml** - OrthoFinder
+
+### Removed in Phase 2
+- ~~typing.yaml~~ — MLST/serotyping
+- ~~count.yaml~~ — RNAseq read counting
+- ~~panX.yaml~~ — Pan-genome analysis
 
 ---
 
@@ -227,31 +230,32 @@ Located in: `workflow/test_data/varcall_test_data/`
 
 ## Known Issues & Technical Debt
 
-### Critical Issues
-1. **Version inconsistency** - README vs environment.yaml (Snakemake version)
-2. **Security issue** - `yaml.load()` should be `yaml.safe_load()` (main.py:42)
-3. **Missing RNAseq CLI** - Documented but no command available
+### Critical Issues (still open)
+1. **Security issue** - `yaml.load()` should be `yaml.safe_load()` (main.py:42)
+2. **`touch()` calls** - Used throughout rules; incompatible with Snakemake 9 — tracked in SNAKEMAKE_MIGRATION.md
 
-### Code Quality Issues
-1. **Commented code** - Extensive commented blocks in main.py (lines 262-323) and Snakefile
-2. **Scratch files** - Multiple `scratch_pad.py` files
-3. **Old files** - `preprocess_old.smk` still present
-4. **Hardcoded paths** - Some configs have hardcoded cluster paths
-5. **Inconsistent echo messages** - Many commands say "Running Assembly Pipeline" incorrectly
-6. **Copy-paste errors** - Multiple functions have identical implementations
+### Code Quality Issues (still open)
+1. **Old files** - `preprocess_old.smk` still present (267 lines, to be removed)
+2. **Unused imports** - `argparse`, `shutil` in main.py
+3. **Hardcoded paths** - Some configs have hardcoded cluster paths
+4. **Copy-paste errors** - Multiple CLI functions have near-identical implementations
 
 ### Cluster Execution
 - Currently: Hardcoded SLURM submission in main.py
-- Old SGE code commented out
 - Hardcoded partition: "institute"
 - No support for different cluster types via config
-- Should use: Snakemake profiles
+- Plan: use Snakemake profiles (see SNAKEMAKE_MIGRATION.md)
 
 ### Documentation
-- README marked "Under Development"
-- Incomplete feature documentation
-- No migration guides
-- Hardcoded institutional paths in examples
+- README substantially updated (April 2026)
+- SNAKEMAKE_MIGRATION.md documents migration path
+- Hardcoded institutional paths still in some config examples
+
+### Resolved in Phase 2
+- ~~Version inconsistency~~ — Confirmed Snakemake 7.32.4
+- ~~Missing RNAseq CLI~~ — RNAseq removed entirely (separate pipeline)
+- ~~scratch_pad.py files~~ — Removed
+- ~~Commented argparse code blocks~~ — Removed from main.py
 
 ---
 
@@ -327,40 +331,23 @@ Located in: `workflow/test_data/varcall_test_data/`
 
 ---
 
-## Next Steps (Phase 1 Remaining)
+## Current Progress (as of 2026-04-22)
 
+### Completed
 1. ✅ Branch created: `refactor-snakemake9-python312`
-2. ✅ Current state documented
-3. 🔜 Set up testing infrastructure
-4. 🔜 Resolve version inconsistencies
-5. 🔜 Document Snakemake 7→9 API changes
+2. ✅ Current state documented (CURRENT_STATE.md, REFACTORING_DECISIONS.md)
+3. ✅ Testing infrastructure: `tests/` with unit/ and integration/ subdirs, pytest.ini
+4. ✅ Snakemake version confirmed: 7.32.4
+5. ✅ Snakemake 7→9 API changes documented: SNAKEMAKE_MIGRATION.md
+6. ✅ Phase 2 cleanup complete — see PHASE2_SUMMARY.md
+7. ✅ breseq rules refactored, breseq_config.yaml created (April 2026)
+8. ✅ Assembly pipeline updated, assembly_config.yaml created (April 2026)
+9. ✅ New package structure started: `code/package/nccrPipe/`
 
----
-
-## Questions for User
-
-1. **Which workflows are actively used in production?**
-   - Isolate variant calling?
-   - Assembly?
-   - RNAseq?
-   - Metagenomics?
-
-2. **Can we drop experimental features?**
-   - Gapseq?
-   - Pan-genome tools?
-   - PhyloPhlAn?
-
-3. **What Snakemake version is currently working?**
-   - README says 5.22
-   - Environment.yaml says >=7.1
-   - What's actually deployed?
-
-4. **Cluster requirements:**
-   - Stay with SLURM only?
-   - Need multi-cluster support?
-   - Partition name configurable or always "institute"?
-
-5. **RNAseq status:**
-   - Should we restore the RNAseq CLI command?
-   - Is it actively used?
-   - Or can it be deprecated?
+### Remaining Before Snakemake 9 Migration
+1. 🔜 Remove `preprocess_old.smk`
+2. 🔜 Fix `yaml.load()` → `yaml.safe_load()` (main.py:42)
+3. 🔜 Remove unused imports (argparse, shutil) from main.py
+4. 🔜 Streamline CLI commands (per REFACTORING_DECISIONS.md)
+5. 🔜 Replace all `touch()` calls (per SNAKEMAKE_MIGRATION.md)
+6. 🔜 Test with Python 3.12 + Snakemake 9
