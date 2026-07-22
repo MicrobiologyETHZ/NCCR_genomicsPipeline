@@ -184,15 +184,20 @@ def instrain(config, compare, local, dry, no_conda, partition):
 @click.option('--local',  is_flag=True, help="Run on local machine")
 @click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry',  is_flag=True, help="Show commands without running them")
+@click.option('--cores', '-j', type=int, default=None,
+              help="Cores for a local run / concurrent jobs on the cluster. "
+                   "Note a local run defaults to 1, which caps ISMapper to a "
+                   "single BWA thread.")
 @PARTITION_OPTION
-def ismap(config, local, dry, no_conda, partition):
+def ismap(config, local, dry, no_conda, cores, partition):
     """Locate insertion sequence (IS) sites with ISMapper."""
     click.echo("Running ISMapper Insertion Sequence Pipeline")
     click.echo(f"Config file: {config}")
     click.echo("Running {}".format(
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = "Snakefile"
-    cmd = snakemake_cmd(config, 'ismap', smk_file, dry, local, no_conda, partition)
+    cmd = snakemake_cmd(config, 'ismap', smk_file, dry, local, no_conda,
+                        partition, cores=cores)
     click.echo(" ".join(cmd))
 
 
