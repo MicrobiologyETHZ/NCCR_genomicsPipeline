@@ -109,4 +109,6 @@ rule annotate_phage:
         expand(OUTDIR/'phage/{name}/checkv/{caller}/quality_summary.tsv',
                name=sorted(ASSEMBLIES), caller=CALLERS),
         expand(OUTDIR/'phage/{name}/annotate/{caller}/phynteny/phynteny_transformer.gbk',
+               name=sorted(ASSEMBLIES), caller=CALLERS),
+        expand(OUTDIR/'phage/{name}/annotate/{caller}/{name}.{caller}.genome_coords.gff3',
                name=sorted(ASSEMBLIES), caller=CALLERS)

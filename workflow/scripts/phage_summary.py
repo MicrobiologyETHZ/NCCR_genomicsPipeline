@@ -58,7 +58,12 @@ def contig_lengths(fasta):
 
 
 def collect_predictions(phage_dir, names, callers):
-    """One row per predicted viral contig, joined to CheckV quality."""
+    """One row per predicted viral contig, with its position in the genome.
+
+    Joins CheckV quality and the extraction coordinates, so each predicted
+    phage can be located on the original assembly rather than only within its
+    own extracted sequence.
+    """
     rows = []
     for name in names:
         for caller in callers:
@@ -71,22 +76,60 @@ def collect_predictions(phage_dir, names, callers):
             if not checkv.empty and 'contig_id' in checkv.columns:
                 quality = checkv.set_index('contig_id').to_dict('index')
 
+            coords = read_table(
+                phage_dir/name/'viral'/f'{name}.{caller}.coords.tsv')
+            located = {}
+            if not coords.empty and 'viral_id' in coords.columns:
+                located = coords.set_index('viral_id').to_dict('index')
+
             for contig, length in lengths.items():
                 q = quality.get(contig, {})
+                loc = located.get(contig, {})
                 rows.append({
                     'assembly': name,
                     'caller': caller,
                     'contig': contig,
                     'length': length,
+                    'source_contig': loc.get('source_contig'),
+                    'source_start': loc.get('source_start'),
+                    'source_end': loc.get('source_end'),
+                    'is_provirus': loc.get('is_provirus'),
                     'checkv_quality': q.get('checkv_quality'),
                     'completeness': q.get('completeness'),
                     'contamination': q.get('contamination'),
                     'provirus': q.get('provirus'),
                 })
 
-    columns = ['assembly', 'caller', 'contig', 'length', 'checkv_quality',
-               'completeness', 'contamination', 'provirus']
+    columns = ['assembly', 'caller', 'contig', 'length',
+               'source_contig', 'source_start', 'source_end', 'is_provirus',
+               'checkv_quality', 'completeness', 'contamination', 'provirus']
     return pd.DataFrame(rows, columns=columns)
+
+
+def collect_cds(phage_dir, names, callers):
+    """Every annotated feature, in original-genome coordinates.
+
+    Concatenates the per-assembly outputs of phage_remap_coords.py.
+
+    Note the `product` column currently carries pharokka's annotation. Enriching
+    it with phynteny's refined functions needs the real column names from a
+    phynteny run, which have not been observed yet — see the TODO below.
+    """
+    frames = []
+    for name in names:
+        for caller in callers:
+            table = read_table(
+                phage_dir/name/'annotate'/caller
+                / f'{name}.{caller}.genome_coords.tsv')
+            if not table.empty:
+                frames.append(table)
+
+    if not frames:
+        return pd.DataFrame(columns=[
+            'assembly', 'caller', 'source_contig', 'genome_start', 'genome_end',
+            'strand', 'feature_type', 'viral_id', 'extract_start',
+            'extract_end', 'feature_id', 'product'])
+    return pd.concat(frames, ignore_index=True)
 
 
 def collect_annotations(phage_dir, names, callers, predictions):
@@ -139,6 +182,9 @@ def main(argv=None):
                         help='Output path for the per-contig table.')
     parser.add_argument('--annotations', required=True,
                         help='Output path for the per-assembly table.')
+    parser.add_argument('--cds', required=True,
+                        help='Output path for the per-feature genome-coordinate '
+                             'table.')
     args = parser.parse_args(argv)
 
     phage_dir = Path(args.phage_dir)
@@ -147,14 +193,17 @@ def main(argv=None):
 
     predictions = collect_predictions(phage_dir, names, callers)
     annotations = collect_annotations(phage_dir, names, callers, predictions)
+    cds = collect_cds(phage_dir, names, callers)
 
-    for path in (args.predictions, args.annotations):
+    for path in (args.predictions, args.annotations, args.cds):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
     predictions.to_csv(args.predictions, sep='\t', index=False)
     annotations.to_csv(args.annotations, sep='\t', index=False)
+    cds.to_csv(args.cds, sep='\t', index=False)
 
     print(f'Wrote {len(predictions)} predicted contigs -> {args.predictions}')
     print(f'Wrote {len(annotations)} assembly x caller rows -> {args.annotations}')
+    print(f'Wrote {len(cds)} features in genome coordinates -> {args.cds}')
     return 0
 
 

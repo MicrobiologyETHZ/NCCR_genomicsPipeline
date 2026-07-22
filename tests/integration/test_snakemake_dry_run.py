@@ -152,10 +152,10 @@ def _phage_dry_run(repo_root, target, extra_config=None, timeout=120):
     # 3 assemblies: prepare + genomad + cenotetaker each (9), 2 callers x 3
     # assemblies of collect_viral (6), plus the target rule.
     ("find_phage", 16),
-    # ... plus checkv/pharokka/phold/phynteny for each of the 6 assembly x caller
-    # combinations (24).
-    ("annotate_phage", 40),
-    ("phage_summary", 40),
+    # ... plus checkv/pharokka/phold/phynteny/remap_coordinates for each of the
+    # 6 assembly x caller combinations (30).
+    ("annotate_phage", 46),
+    ("phage_summary", 46),
 ])
 def test_phage_dry_run(repo_root, target, expected_jobs):
     """Each phage target resolves into a valid DAG of the expected size."""

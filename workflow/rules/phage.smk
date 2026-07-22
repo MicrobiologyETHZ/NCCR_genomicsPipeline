@@ -159,16 +159,29 @@ rule collect_viral:
             if wildcards.caller == 'genomad'
             else OUTDIR/f'phage/{wildcards.name}/cenotetaker/{wildcards.name}.cenotetaker.done')
     output:
-        fasta = OUTDIR/'phage/{name}/viral/{name}.{caller}.fna'
+        fasta = OUTDIR/'phage/{name}/viral/{name}.{caller}.fna',
+        coords = OUTDIR/'phage/{name}/viral/{name}.{caller}.coords.tsv'
     params:
-        # geNomad's summary FASTA is documented to already contain proviruses,
-        # but the provirus FASTA is passed too and the script deduplicates by
-        # header — so this stays correct either way.
-        sources = lambda wildcards: (
-            [OUTDIR/f'phage/{wildcards.name}/genomad/{wildcards.name}_summary/{wildcards.name}_virus.fna',
-             OUTDIR/f'phage/{wildcards.name}/genomad/{wildcards.name}_find_proviruses/{wildcards.name}_provirus.fna']
+        # geNomad only: use _summary/_virus.fna, never _find_proviruses/.
+        # The latter holds *candidate* proviral regions; the summary holds the
+        # ones that passed virus classification. Verified on a real run: 9
+        # candidates, 8 classified, and the rejected contig_145 region had a
+        # marker_enrichment of 8.3 against ~33 for those that passed. Including
+        # the provirus FASTA would annotate regions geNomad deliberately
+        # rejected.
+        fasta = lambda wildcards: (
+            OUTDIR/f'phage/{wildcards.name}/genomad/{wildcards.name}_summary/{wildcards.name}_virus.fna'
             if wildcards.caller == 'genomad'
-            else [OUTDIR/f'phage/{wildcards.name}/cenotetaker/{wildcards.name}/{wildcards.name}_virus_sequences.fna']),
+            else OUTDIR/f'phage/{wildcards.name}/cenotetaker/{wildcards.name}/{wildcards.name}_virus_sequences.fna'),
+        summary = lambda wildcards: (
+            OUTDIR/f'phage/{wildcards.name}/genomad/{wildcards.name}_summary/{wildcards.name}_virus_summary.tsv'
+            if wildcards.caller == 'genomad'
+            else OUTDIR/f'phage/{wildcards.name}/cenotetaker/{wildcards.name}/{wildcards.name}_virus_summary.tsv'),
+        # Cenote-Taker keeps chunk coordinates in a second file; geNomad has
+        # them in the summary itself.
+        prune = lambda wildcards: (
+            '' if wildcards.caller == 'genomad' else
+            f'--prune-summary {OUTDIR}/phage/{wildcards.name}/cenotetaker/{wildcards.name}/{wildcards.name}_prune_summary.tsv'),
         qerrfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.collect.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.collect.qout',
         scratch = 1000,
@@ -180,7 +193,9 @@ rule collect_viral:
         1
     shell:
         'python ./scripts/phage_collect.py --name {wildcards.name} '
-        '--output {output.fasta} {params.sources} &> {log.log}'
+        '--caller {wildcards.caller} --output {output.fasta} '
+        '--coords-out {output.coords} --fasta {params.fasta} '
+        '--summary {params.summary} {params.prune} &> {log.log}'
 
 
 rule checkv:
@@ -218,7 +233,11 @@ rule pharokka:
     input:
         fasta = OUTDIR/'phage/{name}/viral/{name}.{caller}.fna'
     output:
-        gbk = OUTDIR/'phage/{name}/annotate/{caller}/pharokka/pharokka.gbk'
+        gbk = OUTDIR/'phage/{name}/annotate/{caller}/pharokka/pharokka.gbk',
+        # The GFF is the coordinate source for remap_coordinates: it is plain
+        # text, so no Biopython dependency, and phold/phynteny reuse these exact
+        # CDS calls rather than recomputing them.
+        gff = OUTDIR/'phage/{name}/annotate/{caller}/pharokka/pharokka.gff'
     params:
         outdir = lambda wildcards: OUTDIR/f'phage/{wildcards.name}/annotate/{wildcards.caller}/pharokka',
         db = DBS['pharokka'],
@@ -241,7 +260,45 @@ rule pharokka:
         'else '
         '  echo "No viral contigs for {wildcards.name}/{wildcards.caller}; skipping pharokka" > {log.log}; '
         'fi; '
-        'mkdir -p {params.outdir}; touch {output.gbk}'
+        'mkdir -p {params.outdir}; touch {output.gbk} {output.gff}'
+
+
+rule remap_coordinates:
+    """Translate pharokka's annotations onto the original genome.
+
+    Runs straight after pharokka rather than at the end of the chain, because
+    that is where the CDS coordinates are defined — phold and phynteny reuse the
+    same calls and only refine the functional labels. It therefore does not wait
+    on the slow phold step.
+
+    The extract offsets are spot-checked against the assembly (see
+    phage_remap_coords.verify_offsets): an off-by-one or a reverse-complemented
+    extract would otherwise yield plausible-looking but wrong positions.
+    """
+    input:
+        gff = OUTDIR/'phage/{name}/annotate/{caller}/pharokka/pharokka.gff',
+        coords = OUTDIR/'phage/{name}/viral/{name}.{caller}.coords.tsv',
+        viral = OUTDIR/'phage/{name}/viral/{name}.{caller}.fna',
+        assembly = OUTDIR/'phage/{name}/input/{name}.fasta'
+    output:
+        gff = OUTDIR/'phage/{name}/annotate/{caller}/{name}.{caller}.genome_coords.gff3',
+        tsv = OUTDIR/'phage/{name}/annotate/{caller}/{name}.{caller}.genome_coords.tsv'
+    params:
+        qerrfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.remap.qerr',
+        qoutfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.remap.qout',
+        scratch = 1000,
+        mem = 4000,
+        time = 20
+    log:
+        log = OUTDIR/'logs/phage/{name}.{caller}.remap.log'
+    threads:
+        1
+    shell:
+        'python ./scripts/phage_remap_coords.py --gff {input.gff} '
+        '--coords {input.coords} --name {wildcards.name} '
+        '--caller {wildcards.caller} --gff-out {output.gff} '
+        '--tsv-out {output.tsv} --viral-fasta {input.viral} '
+        '--assembly-fasta {input.assembly} &> {log.log}'
 
 
 rule phold:
@@ -322,13 +379,18 @@ rule phage_summary:
         # produced, just with the annotation columns left at zero.
         viral = expand(OUTDIR/'phage/{name}/viral/{name}.{caller}.fna',
                        name=sorted(ASSEMBLIES), caller=CALLERS),
+        coords = expand(OUTDIR/'phage/{name}/viral/{name}.{caller}.coords.tsv',
+                        name=sorted(ASSEMBLIES), caller=CALLERS),
         checkv = expand(OUTDIR/'phage/{name}/checkv/{caller}/quality_summary.tsv',
                         name=sorted(ASSEMBLIES), caller=CALLERS) if ANNOTATE else [],
         cds = expand(OUTDIR/'phage/{name}/annotate/{caller}/phynteny/phynteny_per_cds_funcions.tsv',
                      name=sorted(ASSEMBLIES), caller=CALLERS) if ANNOTATE else [],
+        remapped = expand(OUTDIR/'phage/{name}/annotate/{caller}/{name}.{caller}.genome_coords.tsv',
+                          name=sorted(ASSEMBLIES), caller=CALLERS) if ANNOTATE else [],
     output:
         predictions = OUTDIR/'phage/summary/phage_predictions.tsv',
-        annotations = OUTDIR/'phage/summary/phage_annotations.tsv'
+        annotations = OUTDIR/'phage/summary/phage_annotations.tsv',
+        cds = OUTDIR/'phage/summary/phage_cds_genome_coords.tsv'
     params:
         phagedir = OUTDIR/'phage',
         callers = ','.join(CALLERS),
@@ -346,4 +408,4 @@ rule phage_summary:
         'python ./scripts/phage_summary.py --phage-dir {params.phagedir} '
         '--names {params.names} --callers {params.callers} '
         '--predictions {output.predictions} --annotations {output.annotations} '
-        '&> {log.log}'
+        '--cds {output.cds} &> {log.log}'

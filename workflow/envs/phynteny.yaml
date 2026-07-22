@@ -6,3 +6,8 @@ channels:
   - bioconda
 dependencies:
   - phynteny_transformer=0.1.3
+  # Missing from the bioconda recipe for 0.1.3: src/install_models.py imports
+  # requests, but it is not in the package's run dependencies, so
+  # `install_models` fails with "No module named requests". Declared here so a
+  # fresh environment can actually download the models.
+  - requests
