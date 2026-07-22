@@ -1,0 +1,6 @@
+# CheckV — completeness and contamination of viral contigs.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - checkv=1.1.1

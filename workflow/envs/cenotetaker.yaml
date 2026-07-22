@@ -1,0 +1,6 @@
+# Cenote-Taker 3 — virus discovery and annotation.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - cenote-taker3=3.4.4

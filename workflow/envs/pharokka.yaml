@@ -1,0 +1,7 @@
+#mamba create -p /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/conda_envs/pharokka pharokka=1.9.1 -c conda-forge -c bioconda
+# pharokka — rapid phage annotation; first step of the annotation chain.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - pharokka=1.9.1

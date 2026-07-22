@@ -259,18 +259,56 @@ def metagenome(config, method, local, dry, partition):
 
 @main.command()
 @click.option('-c', '--config', required=True, help='Configuration file')
+@click.option('--predict-only', is_flag=True,
+              help="Stop after prediction; skip CheckV and the annotation chain")
+@click.option('--summary/--no-summary', default=True,
+              help="Also build the merged cross-assembly summary tables")
 @click.option('--local', is_flag=True, help='Run locally')
+@click.option('--no-conda', is_flag=True, help="Do not use conda, under construction")
 @click.option('--dry', is_flag=True, help='Dry run')
+@click.option('--cores', '-j', type=int, default=None,
+              help="Cores for a local run / concurrent jobs on the cluster")
+@click.option('--set', 'set_config', multiple=True, metavar='KEY=VALUE',
+              help="Override a config value, e.g. --set annotate=false. Repeatable.")
 @PARTITION_OPTION
-def phage(config, local, dry, partition):
-    """Detect phages/proviruses in assemblies with geNomad"""
-    click.echo("Running geNomad phage detection workflow")
+def phage(config, predict_only, summary, local, dry, no_conda, cores,
+          set_config, partition):
+    """Predict and annotate phages in assemblies.
+
+    Prediction with geNomad and Cenote-Taker 3, annotation with
+    pharokka -> phold -> phynteny_transformer, quality with CheckV.
+
+    \b
+    Examples:
+      # Dry run: show the DAG without running anything
+      nccrPipe phage -c configs/test_phage_config.yaml --dry --predict-only
+
+      # Smallest real run: one caller, prediction only, 8 cores
+      nccrPipe phage -c my_config.yaml --local -j 8 --predict-only \\
+          --set callers=genomad
+
+      # Full prediction + annotation + summary tables on the cluster
+      nccrPipe phage -c my_config.yaml
+    """
+    if predict_only:
+        target = 'find_phage'
+    elif summary:
+        target = 'phage_summary'
+    else:
+        target = 'annotate_phage'
+    click.echo("Running phage prediction/annotation workflow")
+    click.echo(f"Config file: {config}")
+    click.echo(f"Target: {target}")
+    click.echo("Running {}".format(
+        'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = Path(__file__).parent / "Snakefile_phage"
-    cmd = snakemake_cmd(config, "find_phage", smk_file, dry, local, partition=partition)
+    cmd = snakemake_cmd(config, target, smk_file, dry, local, no_conda,
+                        partition, cores=cores, set_config=set_config)
     click.echo(" ".join(cmd))
 
 
-def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False, partition='institute'):
+def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False,
+                  partition='institute', cores=None, set_config=()):
     config_path = Path(config)
     if not config_path.is_absolute():
         resolved = config_path.resolve()
@@ -281,12 +319,19 @@ def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False, partit
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config}")
     config = str(config_path)
+    # `--config k=v` overrides, appended last so they win over the config file.
+    overrides = ['--config', *set_config] if set_config else []
     if dry:
         cmd = shlex.split(
             f'snakemake -s {smk_file} --configfile {config} -np {analysis} ')
     elif local:
+        # Honour --no-conda here as well as on the cluster; without --use-conda
+        # the `conda:` directives are ignored entirely and every tool has to be
+        # on the PATH of the active environment.
+        conda_arg = '' if no_conda else '--use-conda '
         cmd = shlex.split(
-            f'snakemake -s {smk_file} --configfile {config} -j 1 {analysis} ')
+            f'snakemake -s {smk_file} --configfile {config} {conda_arg}'
+            f'-j {cores or 1} {analysis} ')
     else:
         # SGE
         # rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
@@ -299,8 +344,10 @@ def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False, partit
             part1 = shlex.split(
                 f'snakemake --configfile {config} -s {smk_file} --use-conda -k --cluster ')
         part2 = shlex.split(f'{rstring}')
-        part3 = shlex.split(f' -p -j 6 --max-jobs-per-second 1 {analysis}')
+        part3 = shlex.split(
+            f' -p -j {cores or 6} --max-jobs-per-second 1 {analysis}')
         cmd = part1 + part2 + part3
+    cmd += overrides
     wdPath = Path(__file__).parent.absolute()
     subprocess.check_call(cmd, cwd=wdPath)
     return cmd

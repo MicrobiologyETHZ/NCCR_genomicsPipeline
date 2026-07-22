@@ -1,0 +1,35 @@
+projectName: PhageTest
+
+# Test config for the phage workflow, used by the dry-run integration tests.
+#
+# The `databases:` paths point at empty placeholder directories under
+# tests/test_data/phage/dbs/. That is enough to satisfy the startup validation
+# for a dry run, and deliberately avoids the ~20 GB of real downloads. Actually
+# executing this config would fail once a tool tried to read its database.
+
+outDir: ../output/phage_test
+
+# Three tiny assemblies: one plain FASTA, one gzipped (exercises the
+# decompression branch), and one that yields no viral contigs.
+assembly_dir: ../tests/test_data/phage/assemblies
+
+callers:
+  - genomad
+  - cenotetaker
+
+annotate: true
+
+genomad:
+  disable_nn: true
+
+cenotetaker:
+  prophage: true
+  min_hallmark_genes: 1
+
+databases:
+  genomad: ../tests/test_data/phage/dbs/genomad_db
+  cenotetaker: ../tests/test_data/phage/dbs/ct3_dbs
+  checkv: ../tests/test_data/phage/dbs/checkv_db
+  pharokka: ../tests/test_data/phage/dbs/pharokka_db
+  phold: ../tests/test_data/phage/dbs/phold_db
+  phynteny: ../tests/test_data/phage/dbs/phynteny_models

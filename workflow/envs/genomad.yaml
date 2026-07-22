@@ -1,0 +1,9 @@
+# geNomad — virus / plasmid identification.
+# Note: version 1.9.1 (as reported by collaborators) is not on bioconda; the
+# available releases go 1.9.0 -> 1.10.0. Pinned to the current release instead.
+#mamba create -p /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/conda_envs/genomad -c conda-forge -c bioconda genomad=1.12.0
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - genomad=1.12.0

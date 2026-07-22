@@ -1,19 +1,102 @@
 """
-Standalone geNomad phage / provirus detection workflow.
+Standalone phage prediction and annotation workflow.
 
-Driven by an explicit list of assembly FASTA paths (`sample:` in the config),
-not samples.csv. Run via `nccrPipe phage -c configs/phage_config.yaml`.
-The geNomad rule itself lives in rules/phage.smk.
+Prediction with geNomad and Cenote-Taker 3, annotation with
+pharokka -> phold -> phynteny_transformer, quality assessment with CheckV.
+
+Driven by an explicit set of assembly FASTAs rather than samples.csv, because
+these are usually assemblies the pipeline did not produce (public genomes,
+collaborator data). See scripts/phage_inputs.py for the accepted config forms
+and configs/phage_config.yaml for a worked example.
+
+Run via `nccrPipe phage -c configs/phage_config.yaml`.
+
+Targets:
+    find_phage      prediction only (geNomad / Cenote-Taker 3)
+    annotate_phage  prediction + CheckV + the full annotation chain
+    phage_summary   the above, plus the merged cross-assembly tables
 """
+from pathlib import Path
 
-# Explicit list of assembly FASTA paths to scan.
-SAMPLES = config.get('sample', [])
-if not SAMPLES:
-    raise ValueError("Provide a list of assembly FASTA paths via 'sample' in the config.")
+from scripts.phage_inputs import (
+    as_bool,
+    resolve_assemblies,
+    validate_databases,
+    is_compressed,
+    resolve_path,
+)
+
+
+OUTDIR = resolve_path(config.get('outDir', config.get('output_dir', 'output')),
+                      workflow.basedir)
+
+ASSEMBLIES = resolve_assemblies(config, workflow.basedir)
+
+VALID_CALLERS = ['genomad', 'cenotetaker']
+CALLERS = config.get('callers', VALID_CALLERS)
+if isinstance(CALLERS, str):
+    CALLERS = [CALLERS]
+unknown = set(CALLERS) - set(VALID_CALLERS)
+if unknown:
+    raise ValueError(
+        f"Unknown caller(s) {sorted(unknown)}; expected any of {VALID_CALLERS}.")
+
+ANNOTATE = as_bool(config.get('annotate'), default=True)
+
+
+# Environments can come from either of two places. By default the rules point at
+# the pinned workflow/envs/*.yaml files, so `--use-conda` builds exactly the
+# versions this workflow was written against. Setting `conda_env_dir:` instead
+# points them at pre-built environments in a shared directory — which is how
+# these envs are managed on the cluster, and avoids re-installing ~20 GB of
+# tooling per project.
+CONDA_ENV_DIR = config.get('conda_env_dir', '')
+
+
+def conda_env(name):
+    """Resolve a tool name to a conda env spec for the `conda:` directive."""
+    if not CONDA_ENV_DIR:
+        return f'envs/{name}.yaml'
+
+    env_path = resolve_path(CONDA_ENV_DIR, workflow.basedir) / name
+    # Snakemake only treats a path as an existing environment if it is a
+    # directory at parse time (CondaEnvSpecType.from_spec); otherwise it falls
+    # back to treating the whole path as an environment *name* and fails much
+    # later with a confusing message. Check here instead.
+    if not env_path.is_dir():
+        raise ValueError(
+            f"conda_env_dir is set to {CONDA_ENV_DIR}, but no environment for "
+            f"'{name}' exists at {env_path}.\n"
+            f"Create it with:\n"
+            f"    mamba create -p {env_path} -f workflow/envs/{name}.yaml\n"
+            f"or unset conda_env_dir to let --use-conda build the pinned "
+            f"environments from workflow/envs/*.yaml."
+        )
+    return str(env_path)
+
+# Only demand the databases the requested steps actually need, so a
+# prediction-only run isn't blocked by a missing phold database.
+_required_dbs = set(CALLERS)
+if ANNOTATE:
+    _required_dbs |= {'checkv', 'pharokka', 'phold', 'phynteny'}
+DBS = validate_databases(config, _required_dbs, workflow.basedir)
+# Rules reference every key unconditionally; fill the unused ones so parsing a
+# prediction-only config doesn't raise a KeyError.
+DBS = {tool: DBS.get(tool, '') for tool in
+       ['genomad', 'cenotetaker', 'checkv', 'pharokka', 'phold', 'phynteny']}
 
 include: "rules/phage.smk"
 
 
 rule find_phage:
     input:
-        [f'{assembly}.genomad.done' for assembly in SAMPLES]
+        expand(OUTDIR/'phage/{name}/viral/{name}.{caller}.fna',
+               name=sorted(ASSEMBLIES), caller=CALLERS)
+
+
+rule annotate_phage:
+    input:
+        expand(OUTDIR/'phage/{name}/checkv/{caller}/quality_summary.tsv',
+               name=sorted(ASSEMBLIES), caller=CALLERS),
+        expand(OUTDIR/'phage/{name}/annotate/{caller}/phynteny/phynteny_transformer.gbk',
+               name=sorted(ASSEMBLIES), caller=CALLERS)

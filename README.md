@@ -6,7 +6,8 @@ Pipeline for analysis of isolate genomes.
 
 - Preprocessing (BBMap: adapter trimming, PhiX removal, quality filtering)
 - Isolate genome assembly (SPAdes or Unicycler)
-- Gene calling and functional annotation (Prokka, eggNOG-mapper, geNomad)
+- Gene calling and functional annotation (Prokka, eggNOG-mapper)
+- Phage prediction and annotation (geNomad, Cenote-Taker 3, pharokka, phold, phynteny, CheckV)
 - Variant calling: **Breseq** (mutation detection) and **bcftools** (SNP calling)
 - Strain-level microdiversity: **InStrain** (profile + cross-sample compare)
 
@@ -353,6 +354,131 @@ output_dir/
 │   └── {sample}.faa                      # protein sequences
 └── logs/
 ```
+
+
+## Running Phage Prediction and Annotation
+
+Predicts phages/proviruses with **geNomad** and **Cenote-Taker 3**, then annotates
+each caller's viral contigs through **pharokka → phold → phynteny_transformer**.
+**CheckV** assesses completeness and contamination. The two callers are annotated
+separately so their results can be compared directly.
+
+Unlike the rest of the pipeline, this step is not driven by `samples.csv` — it is
+usually pointed at assemblies produced elsewhere (public genomes, collaborator
+data), and works fine on read-only input directories.
+
+### 1. Install the databases (once)
+
+Six databases, ~20 GB total. Create the tool environments, then fetch them:
+
+```bash
+for e in genomad cenotetaker checkv pharokka phold phynteny; do
+    conda env create -n "$e" -f workflow/envs/"$e".yaml
+done
+
+bash workflow/scripts/setup_phage_dbs.sh /path/to/phage_dbs
+```
+
+The script prints the resulting paths for your config. Note CheckV's directory
+carries a version suffix (`checkv-db-v1.5`) that changes between releases.
+
+### 2. Create a config file
+
+Start from `configs/phage_config.yaml`. Assemblies can be supplied three ways,
+and the forms can be combined:
+
+```yaml
+outDir: ../output
+
+# 1. A directory of assemblies (the usual case). Gzipped files are handled
+#    automatically; *.fa / *.fasta / *.fna / *.fas are matched by default.
+assembly_dir: /path/to/assemblies
+# pattern: "*.fna"
+
+# 2. Specific files — a list, or a name -> path map when you need to control
+#    output names (required if two assemblies share a filename).
+# assemblies:
+#   strainA: /path/to/runA/scaffolds.fasta
+#   strainB: /path/to/runB/scaffolds.fasta
+
+# 3. Assemblies built by this pipeline.
+# samples: samples.csv
+# assembler: spades
+
+callers: [genomad, cenotetaker]   # either or both
+annotate: true                    # false = prediction only
+
+databases:
+  genomad: /path/to/phage_dbs/genomad_db
+  cenotetaker: /path/to/phage_dbs/ct3_dbs
+  checkv: /path/to/phage_dbs/checkv-db-v1.5
+  pharokka: /path/to/phage_dbs/pharokka_db
+  phold: /path/to/phage_dbs/phold_db
+  phynteny: /path/to/phage_dbs/phynteny_models
+```
+
+Assemblies are named by filename stem (`GCA_000001_genomic.fna.gz` →
+`GCA_000001_genomic`). If two files share a stem — several runs each producing
+`scaffolds.fasta` — the parent directory is prepended. If that still collides,
+the workflow stops and asks for explicit names rather than overwriting results.
+
+Only the databases the enabled steps need are checked, so a prediction-only run
+(`annotate: false`) does not require the annotation databases.
+
+By default the rules use the pinned `workflow/envs/*.yaml` files, so `--use-conda`
+builds exactly the versions this workflow targets. To reuse environments you have
+already installed elsewhere, point at their parent directory instead:
+
+```yaml
+conda_env_dir: /nfs/.../conda_envs   # expects genomad/, checkv/, phold/, ... inside
+```
+
+### 3. Run the pipeline
+
+```bash
+# Dry run first
+nccrPipe phage -c /path/to/phage_config.yaml --dry
+
+# Prediction + annotation + summary tables
+nccrPipe phage -c /path/to/phage_config.yaml
+
+# Prediction only
+nccrPipe phage -c /path/to/phage_config.yaml --predict-only
+
+# Local machine
+nccrPipe phage -c /path/to/phage_config.yaml --local
+```
+
+phold's structure prediction runs on CPU by default and is the slowest step; set
+`phold: {cpu: false}` only if submitting to a GPU partition.
+
+### 4. Outputs
+
+```
+output_dir/phage/
+├── {assembly}/
+│   ├── genomad/                                   # geNomad end-to-end output
+│   ├── cenotetaker/                               # Cenote-Taker 3 output
+│   ├── viral/{assembly}.{caller}.fna              # predicted viral contigs
+│   ├── checkv/{caller}/quality_summary.tsv        # completeness/contamination
+│   └── annotate/{caller}/
+│       ├── pharokka/pharokka.gbk
+│       ├── phold/phold.gbk
+│       └── phynteny/phynteny_transformer.gbk      # final annotation
+└── summary/
+    ├── phage_predictions.tsv                      # one row per viral contig
+    └── phage_annotations.tsv                      # one row per assembly x caller
+```
+
+Assemblies with no phage are normal and do not fail the run: the viral FASTA is
+empty, the annotation steps are skipped, and the assembly appears in the summary
+tables with zero contigs.
+
+### Version note
+
+Bioconda has no geNomad 1.9.1 (releases go 1.9.0 → 1.10.0), so `envs/genomad.yaml`
+pins 1.12.0. If you are reproducing a collaborator's results, confirm which
+version they actually ran.
 
 
 ## Running Other Pipeline Steps

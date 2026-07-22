@@ -1,0 +1,8 @@
+# phold — structure-aware phage annotation (ProstT5 + Foldseek).
+# Second step of the annotation chain; consumes pharokka's GenBank output.
+# Pulls in pytorch, so this env is large and must stay separate from the others.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - phold=1.2.5

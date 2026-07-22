@@ -1,19 +1,81 @@
 projectName: MyProject
 
-# Phage / provirus detection with geNomad: `nccrPipe phage -c <this file>`.
+# Phage prediction and annotation: `nccrPipe phage -c <this file>`
 #
-# Unlike the main pipeline (driven by samples.csv), this step takes an explicit
-# list of assembly FASTA paths. Paths can be absolute or relative to the workflow/
-# directory (where snakemake runs); use ../ to reference files in the repo root.
+# Prediction:  geNomad and/or Cenote-Taker 3
+# Annotation:  pharokka -> phold -> phynteny_transformer (run per caller)
+# Quality:     CheckV (reported in the summary; does not filter contigs)
+#
+# Relative paths are resolved against the workflow/ directory, where snakemake
+# runs; use ../ to reference files in the repo root.
 
-# Assembly FASTAs to scan for phages / proviruses:
-sample:
-  - ../tests/test_data/assembly1/scaffolds.fasta
-  - ../tests/test_data/assembly2/scaffolds.fasta
+outDir: ../output
+
+# ---------------------------------------------------------------- inputs
+# Assemblies are usually NOT ones this pipeline produced, so there are three
+# ways to supply them. Use whichever fits; they can be combined.
+
+# 1. A directory of assemblies (the common case). `pattern` is optional and
+#    defaults to *.fa / *.fasta / *.fna / *.fas; each pattern also matches its
+#    gzipped form, and gzipped inputs are decompressed automatically.
+assembly_dir: ../tests/test_data/phage/assemblies
+# pattern: "*.fna"
+
+# 2. Specific files. Either a plain list ...
+# assemblies:
+#   - /path/to/asm1.fna
+#   - /path/to/asm2.fna.gz
+#
+#    ... or a name -> path mapping, when you want to control the output names
+#    (required if two assemblies share a filename, e.g. several `scaffolds.fasta`).
+# assemblies:
+#   strainA: /path/to/runA/scaffolds.fasta
+#   strainB: /path/to/runB/scaffolds.fasta
+
+# 3. Assemblies built by this pipeline, from a samples.csv.
+# samples: ../tests/test_data/samples.csv
+# assembler: spades
+
+# ---------------------------------------------------------------- steps
+# Which predictors to run. Each gets its own annotation chain, so results are
+# directly comparable.
+callers:
+  - genomad
+  - cenotetaker
+
+# Set false to run prediction only (skips CheckV and the annotation chain, and
+# stops the annotation databases from being required).
+annotate: true
 
 genomad:
-  # geNomad database directory. Download once with:
-  #   genomad download-database <parent_dir>     # creates <parent_dir>/genomad_db
-  db: /path/to/genomad_db
-  # Pass --disable-nn-classification (faster; skips the neural-net classifier).
+  # --disable-nn-classification: faster, skips the neural-network classifier.
   disable_nn: true
+
+cenotetaker:
+  # Prophage discovery mode (-p). Keep true for microbial genome input.
+  prophage: true
+  # Cenote-Taker recommends 2 for microbial genomes to cut false positives.
+  min_hallmark_genes: 1
+
+pharokka:
+  # -m metagenome mode; appropriate since the input is a multi-contig viral set.
+  meta: true
+
+phold:
+  # phold's ProstT5 step is far faster on a GPU. Set false only if you are
+  # submitting to a GPU partition.
+  cpu: true
+
+# Keep the normalised/decompressed copy of each input assembly after the run.
+keep_decompressed: false
+
+# ---------------------------------------------------------------- databases
+# Install once with:  bash workflow/scripts/setup_phage_dbs.sh /path/to/phage_dbs
+# Only the databases needed by the enabled steps are checked at startup.
+databases:
+  genomad: /path/to/phage_dbs/genomad_db
+  cenotetaker: /path/to/phage_dbs/ct3_dbs
+  checkv: /path/to/phage_dbs/checkv-db-v1.5
+  pharokka: /path/to/phage_dbs/pharokka_db
+  phold: /path/to/phage_dbs/phold_db
+  phynteny: /path/to/phage_dbs/phynteny_models

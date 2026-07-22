@@ -1,0 +1,7 @@
+# Phynteny Transformer — refines hypothetical-protein calls using gene synteny.
+# Final step of the annotation chain; consumes phold's GenBank output.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - phynteny_transformer=0.1.3
