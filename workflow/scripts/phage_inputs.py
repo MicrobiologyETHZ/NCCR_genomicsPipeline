@@ -20,6 +20,7 @@ Config sources (all optional, merged in this order so later ones win):
 This module is plain Python with no Snakemake imports so it can be unit tested
 directly; see tests/unit/test_phage_inputs.py.
 """
+import sys
 from pathlib import Path
 
 # Suffixes stripped when deriving a name from a filename. Compression suffixes
@@ -219,6 +220,14 @@ def resolve_assemblies(config, basedir):
     return assemblies
 
 
+def _is_placeholder(path):
+    """True if `path` is one of the repo's empty test-placeholder directories."""
+    if not path.is_dir():
+        return False
+    entries = list(path.iterdir())
+    return len(entries) == 1 and entries[0].name == '.placeholder'
+
+
 def validate_databases(config, required, basedir):
     """Check that each required tool's database path is set and non-empty.
 
@@ -240,6 +249,18 @@ def validate_databases(config, required, basedir):
             problems.append(
                 f"  {tool}: path does not exist: {resolved}\n"
                 f"      install with: {DATABASE_INSTALL[tool]}")
+        elif _is_placeholder(resolved):
+            # configs/test_phage_config.yaml points at empty placeholder dirs so
+            # the dry-run tests need no real databases. Those paths get copied
+            # into real configs, where they pass an existence check and the
+            # failure only surfaces later as an opaque error from inside the
+            # tool. Warn rather than raise: the test config legitimately uses
+            # these, so erroring here would break every dry run.
+            print(
+                f"WARNING: {tool} database {resolved} is a repo test "
+                f"placeholder, not a real database. Jobs using it will fail.\n"
+                f"         install a real one with: {DATABASE_INSTALL[tool]}",
+                file=sys.stderr)
 
     if problems:
         raise ValueError(

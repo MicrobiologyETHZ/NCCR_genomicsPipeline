@@ -243,6 +243,72 @@ def test_phage_missing_database_is_reported_clearly(repo_root, tmp_path):
         "Error should tell the user how to install the missing database")
 
 
+def _env_dir(tmp_path, *tools):
+    """A conda_env_dir containing environments for only the named tools."""
+    root = tmp_path / "conda_envs"
+    for tool in tools:
+        (root / tool).mkdir(parents=True)
+    return root
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_conda_env_dir_only_needs_envs_for_tools_that_run(repo_root, tmp_path):
+    """A prediction-only run must not demand the annotation environments.
+
+    Regression: every rule is defined unconditionally and snakemake evaluates
+    each `conda:` at parse time, so conda_env() ran for checkv/pharokka/phold/
+    phynteny even with annotate=false and failed the whole parse.
+    """
+    env_dir = _env_dir(tmp_path, "genomad", "cenotetaker")
+    result = _phage_dry_run(repo_root, "find_phage", extra_config=[
+        "annotate=false", f"conda_env_dir={env_dir}"])
+
+    assert result.returncode == 0, (
+        f"prediction-only run should not need annotation envs:\n{result.stderr}")
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_conda_env_dir_still_fails_for_tools_that_do_run(repo_root, tmp_path):
+    """The guard must still fire when the missing env is actually needed."""
+    env_dir = _env_dir(tmp_path, "genomad", "cenotetaker")
+    result = _phage_dry_run(repo_root, "phage_summary", extra_config=[
+        "annotate=true", f"conda_env_dir={env_dir}"])
+
+    assert result.returncode != 0
+    combined = result.stdout + result.stderr
+    assert "checkv" in combined
+    assert "mamba create" in combined, "error should say how to create the env"
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_conda_env_dir_fails_for_missing_caller_env(repo_root, tmp_path):
+    """geNomad always runs, so its env is required even in prediction-only mode."""
+    env_dir = _env_dir(tmp_path, "cenotetaker")
+    result = _phage_dry_run(repo_root, "find_phage", extra_config=[
+        "annotate=false", f"conda_env_dir={env_dir}"])
+
+    assert result.returncode != 0
+    assert "genomad" in result.stdout + result.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_placeholder_database_warns(repo_root):
+    """Test-placeholder db paths get copied into real configs; warn loudly.
+
+    Not an error: configs/test_phage_config.yaml legitimately points at them so
+    dry runs need no real databases.
+    """
+    result = _phage_dry_run(repo_root, "phage_summary")
+
+    assert result.returncode == 0
+    combined = result.stdout + result.stderr
+    assert "test placeholder" in combined
+
+
 @pytest.mark.integration
 @pytest.mark.slow
 def test_phage_end_to_end_smoke(repo_root, tmp_path):

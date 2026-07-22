@@ -1,3 +1,4 @@
+# mamba create -p /nfs/cds-peta/exports/biol_micro_cds_gr_sunagawa/scratch/Projects_NCCR/conda_envs/phold phold=1.2.5
 # phold — structure-aware phage annotation (ProstT5 + Foldseek).
 # Second step of the annotation chain; consumes pharokka's GenBank output.
 # Pulls in pytorch, so this env is large and must stay separate from the others.

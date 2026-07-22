@@ -80,11 +80,34 @@ snakemake --profile profiles/slurm --jobs 10
 snakemake --executor slurm --jobs 10
 ```
 
-**Action Required:**
-- 🔄 **MAJOR REFACTOR** - Current implementation in `main.py:233-256`
-- Hardcoded cluster submission strings
-- Should migrate to Snakemake profiles
-- Create `profiles/slurm/config.yaml`
+**Status: partially done (July 2026).**
+
+`--cluster` was removed in Snakemake 9, which broke cluster submission for *every*
+command (`snakemake: error: unrecognized arguments: --cluster`). `snakemake_cmd`
+in `main.py` now emits:
+
+```bash
+snakemake --executor cluster-generic --cluster-generic-submit-cmd "sbatch ..."
+```
+
+This was chosen as the minimal fix: `cluster-generic` takes the same sbatch
+command string, so every rule keeps declaring resources in `params:` and no
+`.smk` file needed changing. `environment.yaml` gains
+`snakemake-executor-plugin-cluster-generic`, and the CLI fails with an actionable
+message if the plugin is missing.
+
+**Still open — migrate to the native `slurm` executor:**
+- `--executor slurm` reads `resources:` (`mem_mb`, `runtime`, `cpus_per_task`,
+  `slurm_partition`), whereas ~40 rules across every `.smk` file put these in
+  `params:`. That rewrite is the remaining work.
+- It would also retire the vestigial `scratch` param (never consumed by anything;
+  see below) and the hardcoded `institute` partition.
+- Real job-status polling would replace the current `--max-jobs-per-second 1` and
+  `--latency-wait` workarounds. `cluster-generic` without a
+  `--cluster-generic-status-cmd` infers completion from output files appearing,
+  which is fragile on NFS.
+- Should then move into a Snakemake profile (`profiles/slurm/config.yaml`) rather
+  than being built in Python.
 
 ---
 

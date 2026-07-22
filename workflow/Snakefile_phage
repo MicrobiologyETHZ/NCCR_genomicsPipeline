@@ -44,6 +44,16 @@ if unknown:
 ANNOTATE = as_bool(config.get('annotate'), default=True)
 
 
+ALL_TOOLS = ['genomad', 'cenotetaker', 'checkv', 'pharokka', 'phold', 'phynteny']
+
+# The tools this run will actually execute. Everything else — databases, conda
+# environments — is validated against this set, so a prediction-only run is not
+# blocked by a missing phold database or a missing checkv environment.
+REQUIRED_TOOLS = set(CALLERS)
+if ANNOTATE:
+    REQUIRED_TOOLS |= {'checkv', 'pharokka', 'phold', 'phynteny'}
+
+
 # Environments can come from either of two places. By default the rules point at
 # the pinned workflow/envs/*.yaml files, so `--use-conda` builds exactly the
 # versions this workflow was written against. Setting `conda_env_dir:` instead
@@ -59,11 +69,16 @@ def conda_env(name):
         return f'envs/{name}.yaml'
 
     env_path = resolve_path(CONDA_ENV_DIR, workflow.basedir) / name
-    # Snakemake only treats a path as an existing environment if it is a
-    # directory at parse time (CondaEnvSpecType.from_spec); otherwise it falls
-    # back to treating the whole path as an environment *name* and fails much
-    # later with a confusing message. Check here instead.
-    if not env_path.is_dir():
+    # Every rule is defined unconditionally and snakemake evaluates each rule's
+    # `conda:` at parse time, so this runs even for tools that will never enter
+    # the DAG. Only validate the ones that will actually run — returning an
+    # unchecked path for the others is safe, because snakemake only deploys
+    # environments for jobs it schedules.
+    if name in REQUIRED_TOOLS and not env_path.is_dir():
+        # Snakemake only treats a path as an existing environment if it is a
+        # directory at parse time (CondaEnvSpecType.from_spec); otherwise it
+        # silently falls back to treating the whole path as an environment
+        # *name* and fails much later with a confusing message.
         raise ValueError(
             f"conda_env_dir is set to {CONDA_ENV_DIR}, but no environment for "
             f"'{name}' exists at {env_path}.\n"
@@ -74,16 +89,11 @@ def conda_env(name):
         )
     return str(env_path)
 
-# Only demand the databases the requested steps actually need, so a
-# prediction-only run isn't blocked by a missing phold database.
-_required_dbs = set(CALLERS)
-if ANNOTATE:
-    _required_dbs |= {'checkv', 'pharokka', 'phold', 'phynteny'}
-DBS = validate_databases(config, _required_dbs, workflow.basedir)
+
+DBS = validate_databases(config, REQUIRED_TOOLS, workflow.basedir)
 # Rules reference every key unconditionally; fill the unused ones so parsing a
 # prediction-only config doesn't raise a KeyError.
-DBS = {tool: DBS.get(tool, '') for tool in
-       ['genomad', 'cenotetaker', 'checkv', 'pharokka', 'phold', 'phynteny']}
+DBS = {tool: DBS.get(tool, '') for tool in ALL_TOOLS}
 
 include: "rules/phage.smk"
 

@@ -1,4 +1,5 @@
 import argparse
+import importlib.util
 import subprocess
 import shlex
 import shutil
@@ -270,9 +271,12 @@ def metagenome(config, method, local, dry, partition):
               help="Cores for a local run / concurrent jobs on the cluster")
 @click.option('--set', 'set_config', multiple=True, metavar='KEY=VALUE',
               help="Override a config value, e.g. --set annotate=false. Repeatable.")
+@click.option('--latency-wait', type=int, default=60, show_default=True,
+              help="Seconds to wait for output files to appear on a shared "
+                   "filesystem after a cluster job finishes")
 @PARTITION_OPTION
 def phage(config, predict_only, summary, local, dry, no_conda, cores,
-          set_config, partition):
+          set_config, latency_wait, partition):
     """Predict and annotate phages in assemblies.
 
     Prediction with geNomad and Cenote-Taker 3, annotation with
@@ -303,12 +307,14 @@ def phage(config, predict_only, summary, local, dry, no_conda, cores,
         'locally' if local else ('dry' if dry else 'on cluster')))
     smk_file = Path(__file__).parent / "Snakefile_phage"
     cmd = snakemake_cmd(config, target, smk_file, dry, local, no_conda,
-                        partition, cores=cores, set_config=set_config)
+                        partition, cores=cores, set_config=set_config,
+                        latency_wait=latency_wait)
     click.echo(" ".join(cmd))
 
 
 def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False,
-                  partition='institute', cores=None, set_config=()):
+                  partition='institute', cores=None, set_config=(),
+                  latency_wait=60):
     config_path = Path(config)
     if not config_path.is_absolute():
         resolved = config_path.resolve()
@@ -333,24 +339,57 @@ def snakemake_cmd(config, analysis, smk_file, dry, local, no_conda=False,
             f'snakemake -s {smk_file} --configfile {config} {conda_arg}'
             f'-j {cores or 1} {analysis} ')
     else:
-        # SGE
-        # rstring = r'"DIR=$(dirname {params.qoutfile}); mkdir -p \"${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M"'
-        # Slurm
-        rstring = f'"DIR=$(dirname {{params.qoutfile}}); mkdir -p \\"${{{{DIR}}}}\\"; sbatch -t {{params.time}} --mem-per-cpu={{params.mem}} -n {{threads}} -o {{params.qoutfile}} -e {{params.qerrfile}} --partition {partition}"'
-        if no_conda:
-            part1 = shlex.split(
-                f'snakemake --configfile {config} -s {smk_file} -k --cluster ')
-        else:
-            part1 = shlex.split(
-                f'snakemake --configfile {config} -s {smk_file} --use-conda -k --cluster ')
-        part2 = shlex.split(f'{rstring}')
-        part3 = shlex.split(
-            f' -p -j {cores or 6} --max-jobs-per-second 1 {analysis}')
-        cmd = part1 + part2 + part3
+        check_cluster_executor()
+        conda_arg = '' if no_conda else '--use-conda '
+        # The submit command must reach snakemake as a SINGLE argv element, so it
+        # is appended directly rather than round-tripped through shlex.split.
+        # The {params.*} / {threads} placeholders are expanded by snakemake per
+        # job, not by us, so they must survive untouched.
+        cmd = shlex.split(
+            f'snakemake --configfile {config} -s {smk_file} {conda_arg}-k '
+            f'--executor cluster-generic --cluster-generic-submit-cmd ')
+        cmd.append(slurm_submit_cmd(partition))
+        cmd += shlex.split(
+            f'-p -j {cores or 6} --max-jobs-per-second 1 '
+            f'--latency-wait {latency_wait} {analysis}')
     cmd += overrides
     wdPath = Path(__file__).parent.absolute()
     subprocess.check_call(cmd, cwd=wdPath)
     return cmd
+
+
+def slurm_submit_cmd(partition):
+    """Build the sbatch command that cluster-generic runs for each job.
+
+    Resources come from each rule's `params:` (mem, time) and `threads`. The
+    braces are snakemake placeholders expanded per job, so this string is
+    deliberately not formatted here beyond the partition.
+    """
+    return (
+        'DIR=$(dirname {params.qoutfile}); mkdir -p "$DIR"; '
+        'sbatch -t {params.time} --mem-per-cpu={params.mem} -n {threads} '
+        '-o {params.qoutfile} -e {params.qerrfile} '
+        f'--partition {partition}'
+    )
+
+
+def check_cluster_executor():
+    """Fail early and actionably if the cluster executor plugin is missing.
+
+    Snakemake 8 deprecated and 9 removed `--cluster`; submission now needs an
+    executor plugin. Without this check the failure is snakemake's
+    `unrecognized arguments: --cluster-generic-submit-cmd`, which gives no hint
+    as to what is actually wrong.
+    """
+    if importlib.util.find_spec('snakemake_executor_plugin_cluster_generic') is None:
+        raise click.ClickException(
+            "Cluster submission needs the cluster-generic executor plugin, which "
+            "is not installed.\n\n"
+            "    conda install -c conda-forge -c bioconda "
+            "snakemake-executor-plugin-cluster-generic\n\n"
+            "(Snakemake 9 removed the old --cluster option.) "
+            "Alternatively run with --local, or preview with --dry."
+        )
 
 
 if __name__ == "__main__":

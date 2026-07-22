@@ -24,6 +24,18 @@ conda activate nccrPipe
 pip install -e .
 ```
 
+Cluster submission needs the `cluster-generic` executor plugin, which
+`environment.yaml` installs. If you have an environment from before that was
+added, install it there rather than recreating the environment:
+
+```bash
+conda install -c conda-forge -c bioconda snakemake-executor-plugin-cluster-generic
+```
+
+Snakemake 9 removed the old `--cluster` option, so without this plugin every
+cluster run fails with `unrecognized arguments`. Local (`--local`) and dry
+(`--dry`) runs do not need it.
+
 Conda environments for individual pipeline steps are in `workflow/envs/` and are NOT created automatically. Create them first, naming each env after its YAML file. For example, the InStrain step uses the `instrain` env:
 
 ```bash
@@ -422,8 +434,15 @@ Assemblies are named by filename stem (`GCA_000001_genomic.fna.gz` →
 `scaffolds.fasta` — the parent directory is prepended. If that still collides,
 the workflow stops and asks for explicit names rather than overwriting results.
 
-Only the databases the enabled steps need are checked, so a prediction-only run
-(`annotate: false`) does not require the annotation databases.
+Only what the enabled steps actually need is checked — both databases and conda
+environments. A prediction-only run (`annotate: false`) requires neither the
+annotation databases nor their environments.
+
+Database paths are validated at startup, so a typo fails in seconds rather than
+after a job has been queued. Paths pointing at the repo's test placeholders
+(`tests/test_data/phage/dbs/...`) are flagged with a warning — they exist, so an
+existence check alone would pass them, and the failure would otherwise surface
+much later from inside the tool.
 
 By default the rules use the pinned `workflow/envs/*.yaml` files, so `--use-conda`
 builds exactly the versions this workflow targets. To reuse environments you have
@@ -432,6 +451,11 @@ already installed elsewhere, point at their parent directory instead:
 ```yaml
 conda_env_dir: /nfs/.../conda_envs   # expects genomad/, checkv/, phold/, ... inside
 ```
+
+The subdirectory names must match the tool keys exactly: `genomad`,
+`cenotetaker`, `checkv`, `pharokka`, `phold`, `phynteny`. Note `cenotetaker` —
+the conda package is `cenote-taker3` and the command is `cenotetaker3`, so an
+environment created under either of those names will not be found.
 
 ### 3. Run the pipeline
 

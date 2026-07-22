@@ -5,6 +5,11 @@
 #   conda env create -f environment.yaml
 #   conda activate nccrpipe
 #   pip install -e .
+#
+# To add the cluster executor to an environment that already exists, rather than
+# recreating it:
+#   conda install -n nccrPipe -c conda-forge -c bioconda \
+#       snakemake-executor-plugin-cluster-generic
 
 name: nccrpipe
 channels:
@@ -15,6 +20,12 @@ dependencies:
   # Core dependencies
   - python=3.12.*
   - snakemake>=9.0
+  # Provides `--executor cluster-generic`. Snakemake 8 deprecated and 9 removed
+  # `--cluster`, so cluster submission needs an executor plugin. This one takes
+  # the same sbatch command string, which is why the rules can keep declaring
+  # resources in `params:`. Migrating to the native `slurm` executor (which reads
+  # `resources:`) is the eventual target — see SNAKEMAKE_MIGRATION.md.
+  - snakemake-executor-plugin-cluster-generic>=1.0
   - pyyaml>=6.0
   - click>=8.0
   - pandas>=2.0

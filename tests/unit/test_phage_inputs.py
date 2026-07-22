@@ -231,6 +231,37 @@ def test_validate_databases_rejects_nonexistent_directory(tmp_path, basedir):
 
 
 @pytest.mark.unit
+def test_validate_databases_warns_on_test_placeholder(tmp_path, basedir, capsys):
+    """Placeholder paths copied out of the test config must be called out.
+
+    A warning rather than an error: configs/test_phage_config.yaml points at
+    these on purpose so dry runs need no real databases.
+    """
+    db = tmp_path / "genomad_db"
+    db.mkdir()
+    (db / ".placeholder").write_text("not a real database")
+
+    got = validate_databases(
+        {"databases": {"genomad": str(db)}}, {"genomad"}, basedir)
+
+    assert got == {"genomad": str(db)}          # still usable, just flagged
+    warning = capsys.readouterr().err
+    assert "test placeholder" in warning
+    assert "genomad download-database" in warning
+
+
+@pytest.mark.unit
+def test_validate_databases_silent_for_real_looking_database(tmp_path, basedir, capsys):
+    db = tmp_path / "genomad_db"
+    db.mkdir()
+    (db / "genomad_db.dmnd").write_text("pretend index")
+
+    validate_databases({"databases": {"genomad": str(db)}}, {"genomad"}, basedir)
+
+    assert "placeholder" not in capsys.readouterr().err
+
+
+@pytest.mark.unit
 def test_validate_databases_only_checks_required_tools(tmp_path, basedir):
     """A prediction-only run must not demand the annotation databases."""
     db = tmp_path / "genomad_db"
