@@ -1,0 +1,19 @@
+"""
+Standalone geNomad phage / provirus detection workflow.
+
+Driven by an explicit list of assembly FASTA paths (`sample:` in the config),
+not samples.csv. Run via `nccrPipe phage -c configs/phage_config.yaml`.
+The geNomad rule itself lives in rules/phage.smk.
+"""
+
+# Explicit list of assembly FASTA paths to scan.
+SAMPLES = config.get('sample', [])
+if not SAMPLES:
+    raise ValueError("Provide a list of assembly FASTA paths via 'sample' in the config.")
+
+include: "rules/phage.smk"
+
+
+rule find_phage:
+    input:
+        [f'{assembly}.genomad.done' for assembly in SAMPLES]

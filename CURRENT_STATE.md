@@ -70,7 +70,7 @@
     - Method: `metaflye`
 
 12. **`phage`** - Phage detection with geNomad
-    - Status: ✅ Active (uses Snakefile_test)
+    - Status: ✅ Active (Snakefile_phage + rules/phage.smk, configs/phage_config.yaml)
     - Snakemake target: `find_phage`
 
 ### ❌ Missing RNAseq Command
@@ -128,7 +128,7 @@
 
 1. **Snakefile** - Main workflow (isolate genomics)
 2. **Snakefile_metagenome** - Metagenomic workflows
-3. **Snakefile_test** - Test/phage workflows
+3. **Snakefile_phage** - Phage detection workflow (geNomad)
 
 ---
 

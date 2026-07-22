@@ -1,0 +1,33 @@
+projectName: TestInStrain
+
+dataDir: ../tests/test_data
+outDir: ../tests/output
+samples: ../tests/test_data/samples.csv
+
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+se: false
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+
+qc: yes
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+merge_replicates: false
+
+adapters: ../data/adapters/adapters.fa
+phix: ../data/adapters/phix174_ill.ref.fa.gz
+
+reference:
+  refDir: ../tests/test_data
+  ref:
+    - sample1
+    - sample2
+
+instrain:
+  min_cov: 1          # relaxed for the tiny bundled test data
+  run_compare: true

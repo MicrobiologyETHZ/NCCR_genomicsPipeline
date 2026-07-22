@@ -1,0 +1,19 @@
+projectName: MyProject
+
+# Phage / provirus detection with geNomad: `nccrPipe phage -c <this file>`.
+#
+# Unlike the main pipeline (driven by samples.csv), this step takes an explicit
+# list of assembly FASTA paths. Paths can be absolute or relative to the workflow/
+# directory (where snakemake runs); use ../ to reference files in the repo root.
+
+# Assembly FASTAs to scan for phages / proviruses:
+sample:
+  - ../tests/test_data/assembly1/scaffolds.fasta
+  - ../tests/test_data/assembly2/scaffolds.fasta
+
+genomad:
+  # geNomad database directory. Download once with:
+  #   genomad download-database <parent_dir>     # creates <parent_dir>/genomad_db
+  db: /path/to/genomad_db
+  # Pass --disable-nn-classification (faster; skips the neural-net classifier).
+  disable_nn: true

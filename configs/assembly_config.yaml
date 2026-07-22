@@ -40,5 +40,5 @@ unimode: normal          # unicycler mode (only used when assembler: unicycler)
 database: eggnog         # options: eggnog  (kegg not supported for external use)
 eggnog_db: /path/to/eggnog-data   # download with: download_eggnog_data.py
 
-# --- Phage detection (nccrPipe find_phage — optional, separate step) ---
-# genomad_db: /path/to/genomad_db  # download with: genomad download ...
+# --- Phage detection is a separate workflow: see configs/phage_config.yaml
+#     and run `nccrPipe phage -c configs/phage_config.yaml`. ---

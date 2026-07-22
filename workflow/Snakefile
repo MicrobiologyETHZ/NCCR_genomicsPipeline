@@ -37,11 +37,13 @@ include: "rules/assemble.smk"
 include: "rules/annotate.smk"
 # include: "rules/compare_genomes.smk"
 include: "rules/call_variants.smk"
+include: "rules/instrain.smk"
 # include: "rules/typing.smk"
 # include: "rules/profile.smk"
 
-rule find_phage:
-    input: [f'{sample}.genomad.done' for sample in SAMPLES]
+# geNomad phage/provirus detection is a standalone workflow (Snakefile_phage,
+# rules/phage.smk) run via `nccrPipe phage`; it is intentionally not wired into
+# the samples.csv-driven main pipeline.
 
 
 """
@@ -137,6 +139,26 @@ rule varcall:
 breseq_done = [f'{OUTDIR}/breseq/{sample}.breseq.done' for sample in SAMPLES]
 rule breseq:
     input: breseq_done
+
+"""
+InStrain — strain-level microdiversity profiling and cross-sample comparison.
+Reuses the BAMs from `align` (reads mapped to each reference in reference_config).
+"""
+IS_PROFILES = []
+IS_COMPARES = []
+_run_compare = config.get('instrain', {}).get('run_compare', True)
+for ref, samples in reference_config.items():
+    if ref in ('refDir', 'refgbk', 'refgff'):
+        continue
+    IS_PROFILES += [f'{OUTDIR}/instrain/profiles/{sample}_to_{ref}/.IS.profile.done' for sample in samples]
+    if _run_compare and len(samples) >= 2:
+        IS_COMPARES += [f'{OUTDIR}/instrain/compare/{ref}/.IS.compare.done']
+
+rule instrain:
+    input: IS_PROFILES
+
+rule instrain_compare:
+    input: IS_COMPARES
 
 """
 Annotation

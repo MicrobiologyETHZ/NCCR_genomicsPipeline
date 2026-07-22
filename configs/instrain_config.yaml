@@ -1,0 +1,53 @@
+projectName: MyProject
+
+# Input/output paths
+# All paths are relative to the workflow/ directory (where snakemake runs).
+# Use ../ to reference files in the repo root.
+dataDir: ../tests/test_data
+outDir: ../tests/output
+samples: ../tests/test_data/samples.csv   # CSV with columns: sample, unit, fastq_1, fastq_2
+
+# Sample specs
+fq_fwd: _1.fq.gz
+fq_rvr: _2.fq.gz
+se: false
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+
+# Preprocessing (produces the clean reads that get aligned)
+qc: yes
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+merge_replicates: false
+
+adapters: ../data/adapters/adapters.fa
+phix: ../data/adapters/phix174_ill.ref.fa.gz
+
+# Reference(s) for InStrain.
+#   refDir : directory that holds each {ref}.fasta (and where bwa indexes are written)
+#   <name> : reference name -> list of samples mapped to it. With >=2 samples,
+#            `inStrain compare` runs across them. The reference FASTA must be
+#            <refDir>/<name>.fasta (here: ../tests/test_data/ref.fasta).
+reference:
+  refDir: ../tests/test_data
+  ref:
+    - sample1
+    - sample2
+
+# InStrain options
+instrain:
+  min_cov: 5          # --min_cov for profiling
+  run_compare: true   # also run `inStrain compare` across samples per reference
+  # genes: optional, keyed by reference name; prodigal-style gene calls (.fna)
+  # for gene-level microdiversity (dN/dS, per-gene coverage).
+  # genes:
+  #   ref: ../tests/test_data/ref.genes.fna
+  # stb: optional, keyed by reference name; scaffold-to-bin file (TSV: scaffold<tab>bin).
+  # Needed for genome-level (rather than scaffold-level) metrics when the reference
+  # FASTA contains multiple genomes/bins.
+  # stb:
+  #   ref: ../tests/test_data/ref.stb

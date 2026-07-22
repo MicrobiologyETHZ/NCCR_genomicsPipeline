@@ -176,29 +176,8 @@ elif config.get('assembler', 'spades') == 'unicycler':
 else:
     sys.exit(1)
 
-
-
-rule run_genomad:
-    input: '{assembly}'
-    output: marker = touch('{assembly}.genomad.done')
-    params:
-        sample=lambda wildcards: Path(f'{wildcards.assembly}').parent.stem,
-        outdir=lambda wildcards:Path(f'{wildcards.assembly}').parent,
-        scratch=1000,
-        mem=4000,
-        time=800,
-        db = config.get('genomad_db', ''),
-        qerrfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qerr',
-        qoutfile=lambda wildcards: str(OUTDIR / 'logs' / Path(f'{wildcards.assembly}').parent.stem) + '.genomad.qout'
-    conda:
-        'phage'
-    log:
-        log='{assembly}.genomad.log',
-    threads:
-        64
-    shell:
-        'genomad end-to-end --threads {threads} --disable-nn-classification '
-        '{input} {params.outdir} {params.db} &> {log.log} ' 
+# geNomad phage/provirus detection lives in rules/phage.smk and is run as a
+# standalone workflow (Snakefile_phage / `nccrPipe phage`), not as part of assembly.
 
 
 

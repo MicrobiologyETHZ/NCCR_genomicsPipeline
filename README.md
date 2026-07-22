@@ -8,6 +8,7 @@ Pipeline for analysis of isolate genomes.
 - Isolate genome assembly (SPAdes or Unicycler)
 - Gene calling and functional annotation (Prokka, eggNOG-mapper, geNomad)
 - Variant calling: **Breseq** (mutation detection) and **bcftools** (SNP calling)
+- Strain-level microdiversity: **InStrain** (profile + cross-sample compare)
 
 
 ## Installation
@@ -22,7 +23,11 @@ conda activate nccrPipe
 pip install -e .
 ```
 
-Conda environments for individual pipeline steps are in `workflow/envs/` and are NOT created automatically. Create them first. 
+Conda environments for individual pipeline steps are in `workflow/envs/` and are NOT created automatically. Create them first, naming each env after its YAML file. For example, the InStrain step uses the `instrain` env:
+
+```bash
+conda env create -n instrain -f workflow/envs/instrain.yaml
+```
 
 
 ## Running Breseq
@@ -209,6 +214,67 @@ Open `output/index.html` in a browser to view results.
 - Log files for each step are in `outDir/logs/`
 - Run with `--dry` first to catch config errors before submitting jobs
 - Breseq requires a reference with annotation (GenBank preferred). FASTA-only references will not produce gene-level output.
+
+
+## Running InStrain
+
+[InStrain](https://instrain.readthedocs.io/) measures strain-level microdiversity (nucleotide diversity, SNVs, popANI) from reads mapped to a reference, and compares strains across samples. It reuses the same alignment step as variant calling — reads are mapped to your reference FASTA with BWA, then `inStrain profile` runs per sample and (optionally) `inStrain compare` runs across samples.
+
+### 1. Prepare input files
+
+Same preprocessing inputs as Breseq (sample sheet + raw reads). InStrain additionally needs a **reference FASTA** (not GenBank): the file `<refDir>/<refName>.fasta`.
+
+### 2. Create a config file
+
+Copy `configs/instrain_config.yaml` and fill in your paths. The key sections:
+
+```yaml
+# Reference(s): refDir holds each <name>.fasta; <name> maps to the samples
+# mapped against it. References with >=2 samples are eligible for `compare`.
+reference:
+  refDir: /path/to/refs
+  myref:
+    - Sample1
+    - Sample2
+
+instrain:
+  min_cov: 5          # --min_cov for profiling
+  run_compare: true   # also run `inStrain compare` across samples
+  # genes:            # OPTIONAL: prodigal-style gene calls for gene-level stats
+  #   myref: /path/to/myref.genes.fna
+```
+
+To get gene-level microdiversity (per-gene coverage, dN/dS), supply a prodigal-style
+gene-calls FASTA per reference under `instrain.genes` (keyed by reference name); it is
+passed to InStrain via `-g`. Omit it for scaffold-level profiling only.
+
+### 3. Run the pipeline
+
+```bash
+# Per-sample profiling (dry run first)
+nccrPipe instrain --config /path/to/your_config.yaml --dry
+nccrPipe instrain --config /path/to/your_config.yaml          # cluster
+nccrPipe instrain --config /path/to/your_config.yaml --local  # local machine
+
+# Also run cross-sample comparison (popANI / strain sharing)
+nccrPipe instrain --config /path/to/your_config.yaml --compare
+```
+
+Runs (per sample): `inStrain profile {bam} {ref}.fasta -o {out} -p {threads} [-g genes.fna] --min_cov {min_cov}`
+Runs (per reference, ≥2 samples): `inStrain compare -i {profile1} {profile2} ... -o {out} -p {threads}`
+
+### 4. Outputs
+
+```
+outDir/
+├── instrain/
+│   ├── profiles/
+│   │   ├── Sample1_to_myref/      # per-sample IS profile (genome_info.tsv, SNVs.tsv, ...)
+│   │   └── Sample2_to_myref/
+│   └── compare/
+│       └── myref/                 # cross-sample comparison (comparisonsTable.tsv, ...)
+└── logs/instrain/                 # per-step logs
+```
 
 
 ## Running Genome Assembly

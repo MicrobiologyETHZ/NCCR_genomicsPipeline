@@ -157,6 +157,26 @@ def funcall(config, local, dry, no_conda, partition):
     click.echo(" ".join(cmd))
 
 
+# InStrain
+@main.command()
+@click.option('--config', '-c', default='configs/instrain_config.yaml', help='Configuration File')
+@click.option('--compare/--no-compare', default=False,
+              help="Also run inStrain compare across samples (target: instrain_compare)")
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+@PARTITION_OPTION
+def instrain(config, compare, local, dry, no_conda, partition):
+    click.echo("Running InStrain Microdiversity Pipeline")
+    click.echo(f"Config file: {config}")
+    click.echo("Running {}".format(
+        'locally' if local else ('dry' if dry else 'on cluster')))
+    smk_file = "Snakefile"
+    target = 'instrain_compare' if compare else 'instrain'
+    cmd = snakemake_cmd(config, target, smk_file, dry, local, no_conda, partition)
+    click.echo(" ".join(cmd))
+
+
 # Annotate
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
@@ -243,9 +263,9 @@ def metagenome(config, method, local, dry, partition):
 @click.option('--dry', is_flag=True, help='Dry run')
 @PARTITION_OPTION
 def phage(config, local, dry, partition):
-    """Run metagenomic assembly comparison"""
-    click.echo("Running Genomad Workflow")
-    smk_file = Path(__file__).parent / "Snakefile_test"
+    """Detect phages/proviruses in assemblies with geNomad"""
+    click.echo("Running geNomad phage detection workflow")
+    smk_file = Path(__file__).parent / "Snakefile_phage"
     cmd = snakemake_cmd(config, "find_phage", smk_file, dry, local, partition=partition)
     click.echo(" ".join(cmd))
 

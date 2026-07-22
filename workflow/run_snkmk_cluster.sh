@@ -5,5 +5,5 @@ if [ $# -eq 0 ]
       exit 1
 fi
 
-snakemake -s Snakefile_test --use-conda -k --cluster "DIR=\$(dirname {params.qoutfile}); mkdir -p \"\${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M" -p -j 4 --max-jobs-per-second 1 $1
+snakemake -s Snakefile_phage --use-conda -k --cluster "DIR=\$(dirname {params.qoutfile}); mkdir -p \"\${{DIR}}\"; qsub -S /bin/bash -V -cwd -o {params.qoutfile} -e {params.qerrfile} -pe smp {threads} -l h_vmem={params.mem}M" -p -j 4 --max-jobs-per-second 1 $1
 
