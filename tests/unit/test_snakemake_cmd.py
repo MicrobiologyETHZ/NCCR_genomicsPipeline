@@ -143,6 +143,7 @@ def test_config_overrides_are_appended_last():
     ("assemble", "Snakefile"),
     ("breseq", "Snakefile"),
     ("instrain", "Snakefile"),
+    ("ismap", "Snakefile"),
     ("phage_summary", "Snakefile_phage"),
 ])
 def test_all_commands_share_the_fixed_cluster_path(analysis, smk):

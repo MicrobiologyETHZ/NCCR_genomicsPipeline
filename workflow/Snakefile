@@ -38,6 +38,7 @@ include: "rules/annotate.smk"
 # include: "rules/compare_genomes.smk"
 include: "rules/call_variants.smk"
 include: "rules/instrain.smk"
+include: "rules/ismap.smk"
 # include: "rules/typing.smk"
 # include: "rules/profile.smk"
 
@@ -159,6 +160,12 @@ rule instrain:
 
 rule instrain_compare:
     input: IS_COMPARES
+
+"""
+ISMapper — insertion sequence (IS) site detection against reference.refgbk.
+"""
+rule ismap:
+    input: [f'{OUTDIR}/ismap/{sample}/.ismap.done' for sample in SAMPLES]
 
 """
 Annotation

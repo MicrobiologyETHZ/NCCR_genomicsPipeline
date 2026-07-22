@@ -1,0 +1,44 @@
+projectName: MyProject
+
+# Input/output paths
+# All paths are relative to the workflow/ directory (where snakemake runs).
+# Use ../ to reference files in the repo root.
+dataDir: ../tests/test_data
+outDir: ../tests/output
+samples: ../tests/test_data/samples.csv   # CSV with columns: sample, unit, fastq_1, fastq_2
+
+# Sample specs
+fq_fwd: _1.fq.gz   # Forward read filename suffix
+fq_rvr: _2.fq.gz   # Reverse read filename suffix
+se: false
+
+sanitise_name: false
+name_delimiter: _
+name_index: 1
+
+# Preprocessing (produces the clean reads ISMapper runs on, unless use_raw_reads)
+qc: yes
+mink: 11
+trimq: 14
+mapq: 20
+minlen: 45
+merge_replicates: false
+
+adapters: ../data/adapters/adapters.fa
+phix: ../data/adapters/phix174_ill.ref.fa.gz
+
+# Reference genome — ISMapper needs an annotated GenBank to report flanking genes.
+reference:
+  refgbk: ../tests/test_data/ref.gbk
+
+# ISMapper options
+ismap:
+  queries: ../tests/test_data/is_query.fasta   # REQUIRED: multi-FASTA of IS sequences
+  use_raw_reads: false   # true = run on the raw reads in samples.csv, skipping QC
+
+  # All of the below are optional; omit them to use ISMapper's own defaults.
+  # min_clip: 10      # minimum size of a softclipped region to consider
+  # max_clip: 30      # maximum size of a softclipped region to consider
+  # cutoff: 6         # minimum depth of a mapped region
+  # merging: 100      # bed file hit merging distance
+  # all_hits: false   # --a: report all BWA alignments, not just the best

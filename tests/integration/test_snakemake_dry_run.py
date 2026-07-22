@@ -79,6 +79,70 @@ def test_instrain_dry_run(repo_root, target):
 
 @pytest.mark.integration
 @pytest.mark.data
+def test_ismap_dry_run(repo_root):
+    """The ismap target resolves into a valid DAG (no install needed)."""
+    workflow_dir = repo_root / "workflow"
+    config_file = repo_root / "configs" / "test_ismap_config.yaml"
+
+    if not config_file.exists():
+        pytest.skip(f"Config file not found: {config_file}")
+
+    cmd = [
+        "snakemake",
+        "-s", str(workflow_dir / "Snakefile"),
+        "--configfile", str(config_file),
+        "-np",
+        "ismap",
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd, cwd=workflow_dir, capture_output=True, text=True, timeout=60
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail("Dry run timed out")
+    except FileNotFoundError:
+        pytest.skip("Snakemake not installed")
+
+    assert result.returncode == 0, f"Dry run failed: {result.stderr}"
+    combined = result.stdout + result.stderr
+    assert "run_ismap" in combined
+    # ISMapper only accepts _1.fastq.gz / _R1.fastq.gz read names, so the rule
+    # must stage symlinks rather than passing {sample}.1.fq.gz straight through.
+    assert "_1.fastq.gz" in combined, "clean reads were not staged under an ISMapper-parsable name"
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_ismap_missing_queries_is_reported_clearly(repo_root, tmp_path):
+    """Omitting ismap.queries must fail at DAG build naming the config key."""
+    config = tmp_path / "no_queries_config.yaml"
+    config.write_text(
+        "outDir: {}\n"
+        "samples: {}\n"
+        "qc: yes\n"
+        "reference:\n"
+        "  refgbk: {}\n".format(
+            tmp_path / "out",
+            repo_root / "tests" / "test_data" / "samples.csv",
+            repo_root / "tests" / "test_data" / "ref.gbk")
+    )
+
+    workflow_dir = repo_root / "workflow"
+    cmd = ["snakemake", "-s", str(workflow_dir / "Snakefile"),
+           "--configfile", str(config), "-np", "ismap"]
+    try:
+        result = subprocess.run(cmd, cwd=workflow_dir, capture_output=True,
+                                text=True, timeout=60)
+    except FileNotFoundError:
+        pytest.skip("Snakemake not installed")
+
+    assert result.returncode != 0
+    assert "queries" in result.stdout + result.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.data
 @pytest.mark.slow
 def test_instrain_profile_smoke(repo_root, tmp_path):
     """Actually run `inStrain profile` end-to-end on the bundled test data.

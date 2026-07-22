@@ -290,6 +290,78 @@ outDir/
 ```
 
 
+## Running ISMapper
+
+[ISMapper](https://github.com/jhawkey/IS_mapper) locates insertion sequence (IS) elements relative to a reference genome, reporting the position and orientation of each insertion and splitting calls into **novel** (absent from the reference) and **known**. It runs per sample on the QC'd reads, against the same annotated GenBank reference breseq uses.
+
+### 1. Install the environment (once)
+
+```bash
+conda env create -n ismap -f workflow/envs/ismap.yaml
+```
+
+### 2. Prepare input files
+
+Same sample sheet + raw reads as Breseq, plus:
+
+- **IS query FASTA** — a multi-FASTA of the IS sequences to search for. Each record becomes its own results directory, so give the records meaningful names.
+- **Reference genome** — GenBank (`.gbk`). Annotation is what lets ISMapper report the genes flanking each insertion; a FASTA-only reference will not work.
+
+### 3. Create a config file
+
+Copy `configs/ismap_config.yaml` and fill in your paths:
+
+```yaml
+reference:
+  refgbk: /path/to/reference.gbk    # annotated GenBank
+
+ismap:
+  queries: /path/to/is_query.fasta  # REQUIRED: multi-FASTA of IS sequences
+  use_raw_reads: false              # true = skip QC and use the reads in samples.csv
+
+  # Optional — omit any of these to use ISMapper's own defaults
+  # min_clip: 10      # minimum size of a softclipped region to consider
+  # max_clip: 30      # maximum size of a softclipped region to consider
+  # cutoff: 6         # minimum depth of a mapped region
+  # merging: 100      # bed file hit merging distance
+  # all_hits: false   # --a: report all BWA alignments, not just the best
+```
+
+### 4. Run the pipeline
+
+```bash
+# Dry run first
+nccrPipe ismap -c /path/to/ismap_config.yaml --dry
+
+# SLURM cluster
+nccrPipe ismap -c /path/to/ismap_config.yaml
+
+# Local machine
+nccrPipe ismap -c /path/to/ismap_config.yaml --local
+```
+
+Runs (per sample): `ismap --reads {reads} --queries {queries} --reference {refgbk} --output_dir {outDir}/ismap --t {threads}`
+
+### 5. Outputs
+
+```
+outDir/
+├── ismap/
+│   ├── {sample}/
+│   │   └── {IS_query}/{reference}/
+│   │       ├── {sample}__{reference}_table.txt   # one row per IS position
+│   │       └── {sample}__{reference}_removedHits.txt
+│   └── .staged_reads/                            # symlinked reads (see note)
+└── logs/ismap/
+    ├── {sample}.ismap.log       # job stdout/stderr
+    └── {sample}.ismapper.log    # ISMapper's own log
+```
+
+The `{IS_query}` directory names come from the **record names inside your query FASTA**, not the filename, so one query file with three sequences produces three subdirectories per sample.
+
+> **Note on `.staged_reads/`:** ISMapper derives the sample name from the read filename and only accepts `<prefix>_1.fastq[.gz]` / `<prefix>_R1.fastq[.gz]`. This pipeline's clean reads are named `{sample}.1.fq.gz`, which ISMapper cannot parse, so the rule symlinks them under accepted names before running. The symlinks are harmless to delete.
+
+
 ## Running Genome Assembly
 
 ### 1. Prepare input files

@@ -178,6 +178,24 @@ def instrain(config, compare, local, dry, no_conda, partition):
     click.echo(" ".join(cmd))
 
 
+# ISMapper
+@main.command()
+@click.option('--config', '-c', default='configs/ismap_config.yaml', help='Configuration File')
+@click.option('--local',  is_flag=True, help="Run on local machine")
+@click.option('--no-conda',  is_flag=True, help="Do not use conda, under construction")
+@click.option('--dry',  is_flag=True, help="Show commands without running them")
+@PARTITION_OPTION
+def ismap(config, local, dry, no_conda, partition):
+    """Locate insertion sequence (IS) sites with ISMapper."""
+    click.echo("Running ISMapper Insertion Sequence Pipeline")
+    click.echo(f"Config file: {config}")
+    click.echo("Running {}".format(
+        'locally' if local else ('dry' if dry else 'on cluster')))
+    smk_file = "Snakefile"
+    cmd = snakemake_cmd(config, 'ismap', smk_file, dry, local, no_conda, partition)
+    click.echo(" ".join(cmd))
+
+
 # Annotate
 @main.command()
 @click.option('--config', '-c', default='configs/test_variant_calling_config.yaml', help='Configuration File')
