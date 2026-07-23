@@ -4,5 +4,9 @@ channels:
   - defaults
 dependencies:
   - ismapper==2.0.2
+  # ISMapper imports pkg_resources, which ships with setuptools. Python >=3.12
+  # no longer pulls setuptools in by default, and setuptools >=81 drops
+  # pkg_resources, so pin a version that still provides it.
+  - setuptools <81
   - ca-certificates
   - openssl
