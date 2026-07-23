@@ -24,7 +24,7 @@ genomad:
 
 cenotetaker:
   prophage: true
-  min_hallmark_genes: 1
+  min_hallmark_genes: 2
 
 databases:
   genomad: ../tests/test_data/phage/dbs/genomad_db

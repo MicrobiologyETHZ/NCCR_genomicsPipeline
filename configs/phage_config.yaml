@@ -60,6 +60,11 @@ cenotetaker:
 pharokka:
   # -m metagenome mode; appropriate since the input is a multi-contig viral set.
   meta: true
+  # -g gene predictor. Must be set explicitly: pharokka falls back to
+  # prodigal-gv under -m. phanotate calls more tail/connector genes at a
+  # comparable PHROG hit rate, at the cost of extra short unannotated ORFs and
+  # a slower run. Alternatives: prodigal-gv, prodigal, genbank.
+  gene_predictor: phanotate
 
 phold:
   # phold's ProstT5 step is far faster on a GPU. Set false only if you are

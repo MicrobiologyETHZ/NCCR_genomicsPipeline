@@ -36,6 +36,9 @@ GENOMAD_NN_ARG = '--disable-nn-classification' if as_bool(_genomad_cfg.get('disa
 CT_PROPHAGE = 'T' if as_bool(_ct_cfg.get('prophage'), True) else 'F'
 CT_MIN_HALLMARK = _ct_cfg.get('min_hallmark_genes', 1)
 PHAROKKA_META = '-m' if as_bool(_pharokka_cfg.get('meta'), True) else ''
+# Passed explicitly: pharokka's own default under -m is prodigal-gv, and we want
+# phanotate regardless of meta mode.
+PHAROKKA_GENE_PREDICTOR = _pharokka_cfg.get('gene_predictor', 'phanotate')
 PHOLD_CPU = '--cpu' if as_bool(_phold_cfg.get('cpu'), True) else ''
 
 # Decompressed/normalised inputs are intermediates; keep them only if asked.
@@ -242,6 +245,7 @@ rule pharokka:
         outdir = lambda wildcards: OUTDIR/f'phage/{wildcards.name}/annotate/{wildcards.caller}/pharokka',
         db = DBS['pharokka'],
         meta = PHAROKKA_META,
+        gene_predictor = PHAROKKA_GENE_PREDICTOR,
         qerrfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.pharokka.qerr',
         qoutfile = lambda wildcards: OUTDIR/f'logs/phage/{wildcards.name}.{wildcards.caller}.pharokka.qout',
         scratch = 6000,
@@ -256,7 +260,7 @@ rule pharokka:
     shell:
         'if [ -s {input.fasta} ]; then '
         '  pharokka.py -i {input.fasta} -o {params.outdir} -d {params.db} '
-        '  -t {threads} -p pharokka {params.meta} -f &> {log.log}; '
+        '  -t {threads} -p pharokka -g {params.gene_predictor} {params.meta} -f &> {log.log}; '
         'else '
         '  echo "No viral contigs for {wildcards.name}/{wildcards.caller}; skipping pharokka" > {log.log}; '
         'fi; '
