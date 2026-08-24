@@ -4,9 +4,18 @@ channels:
   - defaults
 dependencies:
   - ismapper==2.0.2
-  # ISMapper imports pkg_resources, which ships with setuptools. Python >=3.12
-  # no longer pulls setuptools in by default, and setuptools >=81 drops
-  # pkg_resources, so pin a version that still provides it.
+  # ISMapper 2.0.2 uses the old Biopython API where SeqFeature exposed .strand
+  # (create_output.py: left_feature.strand). Biopython removed SeqFeature.strand
+  # in 1.80 (it now lives on feature.location.strand), so an unpinned env pulls a
+  # too-new Biopython and dies with "'SeqFeature' object has no attribute
+  # 'strand'". 1.79 is the last release with the old API. This isolated tool env
+  # does not need the pipeline's Python 3.12; 3.10 is what Biopython 1.79 builds
+  # against and also sidesteps the pkg_resources issue below.
+  - python=3.10.*
+  - biopython=1.79
+  # ISMapper imports pkg_resources, which ships with setuptools. setuptools >=81
+  # drops pkg_resources, and conda otherwise pulls the latest, so pin a version
+  # that still provides it.
   - setuptools <81
   - ca-certificates
   - openssl
