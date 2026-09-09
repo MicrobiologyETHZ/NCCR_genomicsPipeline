@@ -1,0 +1,15 @@
+projectName: PgapTest
+
+# Test config for the PGAP workflow, used by the dry-run integration tests.
+#
+# tests/test_data/pgap_samples.csv points at two tiny FASTAs (one nested under
+# tests/test_data/pgap/pacbio/, to exercise samplesheet generation from a
+# subdirectory). pgap.pgap_dir is a placeholder: fine for a dry run, since PGAP
+# itself is never invoked.
+
+outDir: ../output/pgap_test
+
+pgap_samples: ../tests/test_data/pgap_samples.csv
+
+pgap:
+  pgap_dir: ../tests/test_data/pgap/placeholder_install

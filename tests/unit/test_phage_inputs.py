@@ -107,6 +107,29 @@ def test_assembly_dir_matches_gzipped_without_explicit_pattern(tmp_path, basedir
 
 
 @pytest.mark.unit
+def test_assembly_dir_is_not_recursive_by_default(tmp_path, basedir):
+    """PGAP's samplesheet generator needs subdirectories scanned; phage doesn't."""
+    d = tmp_path / "assemblies"
+    write_fasta(d / "top.fna")
+    write_fasta(d / "sub" / "nested.fna")
+
+    got = resolve_assemblies({"assembly_dir": str(d)}, basedir)
+
+    assert set(got) == {"top"}
+
+
+@pytest.mark.unit
+def test_assembly_dir_recursive_finds_nested_files(tmp_path, basedir):
+    d = tmp_path / "assemblies"
+    write_fasta(d / "top.fna")
+    write_fasta(d / "sub" / "nested.fna")
+
+    got = resolve_assemblies({"assembly_dir": str(d), "recursive": True}, basedir)
+
+    assert set(got) == {"top", "nested"}
+
+
+@pytest.mark.unit
 def test_explicit_pattern_narrows_selection(tmp_path, basedir):
     d = tmp_path / "assemblies"
     write_fasta(d / "keep.fna")

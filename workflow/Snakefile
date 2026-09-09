@@ -25,7 +25,7 @@ if samples_file:
     SAMPLES = pd.read_csv(samples_file, comment='#')['sample'].unique()
 else:
     SAMPLES = config.get('sample', [])
-    sampleInfo = None
+    sampleInfo = pd.DataFrame()
 
 if len(SAMPLES) == 0:
     ValueError("Provide samples via 'samples'")
@@ -183,6 +183,13 @@ else:
 
 rule annotate:
     input: FAAs
+
+"""
+PGAP — see rules/annotate.smk for the `pgap` rule and config schema. Genomes
+come from a samplesheet (config: pgap_samples), not from SAMPLES/samples.csv.
+"""
+rule run_pgap:
+    input: [f'{OUTDIR}/pgap/{name}' for name in PGAP_SAMPLES]
 
 
 # if config['assembler'] == 'spades':

@@ -7,6 +7,7 @@ Pipeline for analysis of isolate genomes.
 - Preprocessing (BBMap: adapter trimming, PhiX removal, quality filtering)
 - Isolate genome assembly (SPAdes or Unicycler)
 - Gene calling and functional annotation (Prokka, eggNOG-mapper)
+- Submission-quality genome annotation (**PGAP**, NCBI's Prokaryotic Genome Annotation Pipeline)
 - Phage prediction and annotation (geNomad, Cenote-Taker 3, pharokka, phold, phynteny, CheckV)
 - Variant calling: **Breseq** (mutation detection) and **bcftools** (SNP calling)
 - Strain-level microdiversity: **InStrain** (profile + cross-sample compare)
@@ -575,6 +576,89 @@ tables with zero contigs.
 Bioconda has no geNomad 1.9.1 (releases go 1.9.0 → 1.10.0), so `envs/genomad.yaml`
 pins 1.12.0. If you are reproducing a collaborator's results, confirm which
 version they actually ran.
+
+
+## Running PGAP Annotation
+
+[PGAP](https://github.com/ncbi/pgap) (NCBI's Prokaryotic Genome Annotation
+Pipeline) produces submission-quality annotations, run alongside — not instead
+of — the Prokka step above. It runs entirely inside its own Apptainer
+container rather than a conda env, and needs a per-genome **taxon**, which
+can't be inferred from a filename — so instead of a live directory scan (like
+the phage workflow above), you generate an editable samplesheet once.
+
+### 1. Install PGAP (once)
+
+PGAP has its own Apptainer-based installer; follow
+[NCBI's install instructions](https://github.com/ncbi/pgap/wiki/Quick-Start)
+to get `pgap.py` and its reference data cache onto the cluster. Note the
+install directory and cache path for the config below. Apptainer itself must
+already be on `PATH`.
+
+### 2. Generate the samplesheet
+
+Scans a directory of genome FASTAs — including subdirectories — and writes an
+editable CSV:
+
+```bash
+nccrPipe pgap-samples -i /path/to/genomes -o configs/pgap_samples.csv --taxon "Pseudomonas"
+```
+
+`--taxon` fills in a default for every genome found. If the directory mixes
+species, hand-edit the `taxon` column per row afterward — that's the whole
+reason this is a samplesheet rather than a directory scan wired straight into
+the config.
+
+### 3. Create a config file
+
+Copy `configs/pgap_config.yaml` and fill in your paths:
+
+```yaml
+outDir: /path/to/output
+
+pgap_samples: /path/to/configs/pgap_samples.csv
+
+pgap:
+  pgap_dir: /path/to/pgap_install
+  # cache: /path/to/pgap_install/cache   # optional, defaults to pgap_dir/cache
+```
+
+### 4. Run the pipeline
+
+```bash
+# Dry run first
+nccrPipe pgap -c /path/to/pgap_config.yaml --dry
+
+# SLURM cluster
+nccrPipe pgap -c /path/to/pgap_config.yaml
+
+# Local machine
+nccrPipe pgap -c /path/to/pgap_config.yaml --local
+```
+
+### 5. Outputs
+
+```
+outDir/
+├── pgap/
+│   └── {name}/            # PGAP's own output layout: annot.gbk, annot.gff,
+│                           # annot.faa, annot.sqn, etc.
+└── logs/pgap/
+    └── {name}.log          # PGAP's own log, plus the cache/build version stamped at the top
+```
+
+### Notes for anyone reading the rule
+
+Two things in `workflow/rules/annotate.smk`'s `pgap` rule look unusual but are
+deliberate:
+
+- **No `conda:` directive.** PGAP needs a clean host interpreter — every tool
+  it runs lives inside its own container, and a conda env would interfere.
+- **`unset SLURM_CPUS_PER_TASK NSLOTS` in the shell block.** On SLURM,
+  `threads:` becomes `--cpus-per-task`, which sets `SLURM_CPUS_PER_TASK` in
+  the job; PGAP then passes `--cpus` to Apptainer and hits a cgroup-v2 crash.
+  Unsetting it only hides the count from PGAP — the SLURM core allocation
+  itself is unaffected.
 
 
 ## Running Other Pipeline Steps

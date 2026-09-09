@@ -11,6 +11,7 @@ path, which keeps outputs under OUTDIR and off read-only input directories.
 Config sources (all optional, merged in this order so later ones win):
 
     assembly_dir: /path/to/assemblies    # + optional `pattern:` (str or list)
+                                          # and `recursive:` (default False)
     assemblies:                          # list of paths ...
       - /path/to/asm1.fna
     assemblies:                          # ... or an explicit name -> path map
@@ -90,11 +91,13 @@ def is_compressed(path):
     return Path(path).suffix.lower() in COMPRESSION_SUFFIXES
 
 
-def _glob_assembly_dir(assembly_dir, pattern):
+def _glob_assembly_dir(assembly_dir, pattern, recursive=False):
     """Collect assembly files under `assembly_dir` matching `pattern`.
 
     `pattern` may be a single glob or a list of globs. Each pattern also matches
     its compressed form, since public assemblies almost always arrive gzipped.
+    `recursive` opts into scanning subdirectories (`rglob` instead of `glob`);
+    it defaults to False so existing (single-directory) callers are unaffected.
     """
     if pattern is None:
         patterns = list(DEFAULT_PATTERNS)
@@ -111,9 +114,10 @@ def _glob_assembly_dir(assembly_dir, pattern):
         if Path(pat).suffix.lower() not in COMPRESSION_SUFFIXES:
             expanded.extend(f'{pat}{ext}' for ext in sorted(COMPRESSION_SUFFIXES))
 
+    glob_fn = assembly_dir.rglob if recursive else assembly_dir.glob
     found = set()
     for pat in expanded:
-        found.update(p for p in assembly_dir.glob(pat) if p.is_file())
+        found.update(p for p in glob_fn(pat) if p.is_file())
     return sorted(found)
 
 
@@ -192,7 +196,8 @@ def resolve_assemblies(config, basedir):
         assembly_dir = resolve_path(assembly_dir, basedir)
         if not assembly_dir.is_dir():
             raise ValueError(f"assembly_dir does not exist: {assembly_dir}")
-        found = _glob_assembly_dir(assembly_dir, config.get('pattern'))
+        found = _glob_assembly_dir(assembly_dir, config.get('pattern'),
+                                   recursive=as_bool(config.get('recursive'), False))
         if not found:
             raise ValueError(
                 f"No assemblies found in {assembly_dir} matching "

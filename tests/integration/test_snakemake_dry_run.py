@@ -114,6 +114,46 @@ def test_ismap_dry_run(repo_root):
 
 @pytest.mark.integration
 @pytest.mark.data
+def test_ismap_use_raw_reads_without_samplesheet_is_reported_clearly(repo_root, tmp_path):
+    """use_raw_reads needs samples.csv; omitting it must fail with a clear message.
+
+    Regression test: `sampleInfo` defaults to an empty DataFrame (not None) when
+    `samples:` is omitted, since PGAP configs legitimately have no samples.csv.
+    The `sampleInfo is None` guard in ismap.smk was dead code until it was fixed
+    to `sampleInfo.empty` — without that fix this hits a raw pandas KeyError
+    instead of the actionable WorkflowError below.
+    """
+    config = tmp_path / "raw_reads_no_samplesheet_config.yaml"
+    config.write_text(
+        "outDir: {}\n"
+        "sample: [teststrain]\n"
+        "reference:\n"
+        "  refgbk: {}\n"
+        "ismap:\n"
+        "  queries: {}\n"
+        "  use_raw_reads: true\n".format(
+            tmp_path / "out",
+            repo_root / "tests" / "test_data" / "ref.gbk",
+            repo_root / "tests" / "test_data" / "is_query.fasta")
+    )
+
+    workflow_dir = repo_root / "workflow"
+    cmd = ["snakemake", "-s", str(workflow_dir / "Snakefile"),
+           "--configfile", str(config), "-np", "ismap"]
+    try:
+        result = subprocess.run(cmd, cwd=workflow_dir, capture_output=True,
+                                text=True, timeout=60)
+    except FileNotFoundError:
+        pytest.skip("Snakemake not installed")
+
+    assert result.returncode != 0
+    combined = result.stdout + result.stderr
+    assert "sample sheet" in combined
+    assert "KeyError" not in combined
+
+
+@pytest.mark.integration
+@pytest.mark.data
 def test_ismap_missing_queries_is_reported_clearly(repo_root, tmp_path):
     """Omitting ismap.queries must fail at DAG build naming the config key."""
     config = tmp_path / "no_queries_config.yaml"
@@ -181,6 +221,68 @@ def test_instrain_profile_smoke(repo_root, tmp_path):
     assert result.returncode == 0, f"InStrain run failed:\n{result.stdout}\n{result.stderr}"
     markers = list((tmp_path / "output" / "instrain" / "profiles").glob("*/.IS.profile.done"))
     assert markers, "No InStrain profile completion markers were produced"
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_pgap_dry_run(repo_root):
+    """The run_pgap target resolves into a valid DAG, one job per genome.
+
+    No --use-conda (the pgap rule deliberately has no conda: directive) and no
+    real PGAP install needed: pgap.pgap_dir is a placeholder in the test
+    config, which is fine since a dry run never invokes pgap.py.
+    """
+    workflow_dir = repo_root / "workflow"
+    config_file = repo_root / "configs" / "test_pgap_config.yaml"
+
+    if not config_file.exists():
+        pytest.skip(f"Config file not found: {config_file}")
+
+    cmd = ["snakemake", "-s", str(workflow_dir / "Snakefile"),
+           "--configfile", str(config_file), "-np", "run_pgap"]
+
+    try:
+        result = subprocess.run(cmd, cwd=workflow_dir, capture_output=True,
+                                text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        pytest.fail("PGAP dry run timed out")
+    except FileNotFoundError:
+        pytest.skip("Snakemake not installed")
+
+    assert result.returncode == 0, f"Dry run failed: {result.stderr}"
+    combined = result.stdout + result.stderr
+    # Both genomes from tests/test_data/pgap_samples.csv must be scheduled,
+    # including the one nested under pgap/pacbio/ (recursive discovery).
+    assert "strainA" in combined
+    assert "strainB" in combined
+    assert re.search(r"^total\s+3$", combined, re.MULTILINE), (
+        f"Expected 3 jobs (2 genomes + run_pgap); got:\n{combined[-2000:]}")
+
+
+@pytest.mark.integration
+@pytest.mark.data
+def test_pgap_missing_pgap_dir_is_reported_clearly(repo_root, tmp_path):
+    """Omitting pgap.pgap_dir must fail at DAG build naming the fix."""
+    config = tmp_path / "no_pgap_dir_config.yaml"
+    config.write_text(
+        "outDir: {}\n"
+        "pgap_samples: {}\n".format(
+            tmp_path / "out",
+            repo_root / "tests" / "test_data" / "pgap_samples.csv")
+    )
+
+    workflow_dir = repo_root / "workflow"
+    cmd = ["snakemake", "-s", str(workflow_dir / "Snakefile"),
+           "--configfile", str(config), "-np", "run_pgap"]
+    try:
+        result = subprocess.run(cmd, cwd=workflow_dir, capture_output=True,
+                                text=True, timeout=60)
+    except FileNotFoundError:
+        pytest.skip("Snakemake not installed")
+
+    assert result.returncode != 0
+    combined = result.stdout + result.stderr
+    assert "pgap_dir" in combined
 
 
 def _phage_dry_run(repo_root, target, extra_config=None, timeout=120):

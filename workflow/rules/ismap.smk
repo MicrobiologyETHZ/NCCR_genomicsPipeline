@@ -54,7 +54,7 @@ def _ismap_fq(sample, read):
     only defined when sampleInfo is non-empty.
     """
     if ISMAP_USE_RAW:
-        if sampleInfo is None:
+        if sampleInfo.empty:
             raise WorkflowError(
                 "ismap.use_raw_reads needs the read paths from a sample sheet. "
                 "Set 'samples: /path/to/samples.csv' in the config, or set "

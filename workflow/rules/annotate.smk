@@ -4,6 +4,95 @@
 #     input: [OUTDIR/f'assembly/{sample}/scaffolds.fasta.gz' for sample in SUBSAMPLES]
 #
 from pathlib import Path
+import pandas as pd
+
+"""
+PGAP — NCBI's Prokaryotic Genome Annotation Pipeline, run over an arbitrary set
+of genomes rather than samples.csv. Genomes come from a samplesheet generated
+by `nccrPipe pgap-samples` (see workflow/scripts/pgap_samplesheet.py), with
+columns name,fasta,taxon — taxon is per-genome because PGAP's `-s` can't be
+inferred from a filename.
+
+Config:
+    pgap_samples: path/to/pgap_samples.csv   # optional; PGAP_SAMPLES is {} if unset
+    pgap:
+      pgap_dir: /path/to/pgap_install         # required if pgap_samples is set
+      cache: /path/to/pgap_install/cache      # optional, defaults to pgap_dir/cache
+"""
+_pgap_samples_file = config.get('pgap_samples', '')
+if _pgap_samples_file:
+    _pgap_df = pd.read_csv(_resolve(_pgap_samples_file), comment='#')
+    PGAP_SAMPLES = {
+        row['name']: {'fasta': str(_resolve(row['fasta'])), 'taxon': row['taxon']}
+        for _, row in _pgap_df.iterrows()
+    }
+else:
+    PGAP_SAMPLES = {}
+
+_pgap_cfg = config.get('pgap', {})
+PGAP_DIR = str(_resolve(_pgap_cfg['pgap_dir'])) if _pgap_cfg.get('pgap_dir') else ''
+PGAP_CACHE = (str(_resolve(_pgap_cfg['cache'])) if _pgap_cfg.get('cache')
+              else f'{PGAP_DIR}/cache')
+
+if PGAP_SAMPLES and not PGAP_DIR:
+    raise ValueError(
+        "pgap_samples is set but pgap.pgap_dir is missing from the config.\n"
+        "Add:\n"
+        "  pgap:\n"
+        "    pgap_dir: /path/to/pgap_install\n"
+        "    # cache: /path/to/pgap_install/cache   # optional, defaults to pgap_dir/cache"
+    )
+
+wildcard_constraints:
+    name = r'[A-Za-z0-9._\-]+'
+
+
+rule pgap:
+    """Annotate one genome with PGAP, running inside its own Apptainer container.
+
+    Four things that matter here, all learned the hard way:
+      1. `unset SLURM_CPUS_PER_TASK NSLOTS` — otherwise PGAP passes --cpus to
+         Apptainer and hits a cgroup-v2 crash. threads: 8 above still reserves
+         8 cores via the SLURM submission (params.mem is per-cpu); this only
+         hides the count from PGAP itself.
+      2. No `conda:` directive — PGAP needs a clean host interpreter; every
+         tool it runs lives inside its own container.
+      3. `directory()` output, not a file path inside it — Snakemake
+         pre-creates the parent dirs of file outputs, and PGAP refuses a
+         pre-existing -o dir. `rm -rf` first clears leftovers from a failed run.
+      4. Apptainer must already be on PATH (confirmed true on this cluster).
+    """
+    input:
+        fasta = lambda wc: PGAP_SAMPLES[wc.name]['fasta']
+    output:
+        outdir = directory(OUTDIR/'pgap/{name}')
+    params:
+        taxon = lambda wc: PGAP_SAMPLES[wc.name]['taxon'],
+        pgap = f'{PGAP_DIR}/pgap.py',
+        cache = PGAP_CACHE,
+        scratch = 20000,
+        mem = 32000,
+        time = 300,
+        qerrfile = lambda wc: OUTDIR/f'logs/pgap/{wc.name}.qerr',
+        qoutfile = lambda wc: OUTDIR/f'logs/pgap/{wc.name}.qout'
+    log:
+        log = OUTDIR/'logs/pgap/{name}.log'
+    threads:
+        8
+    shell:
+        r"""
+        rm -rf {output.outdir}
+        unset SLURM_CPUS_PER_TASK NSLOTS
+
+        export SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt
+        export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
+        export PGAP_INPUT_DIR={params.cache}
+
+        {{ echo "PGAP cache version: $(cat {params.cache}/VERSION 2>/dev/null)"; {params.pgap} --version; }} > {log.log} 2>&1
+
+        {params.pgap} -n -g {input.fasta} -s "{params.taxon}" \
+            -D apptainer --auto-correct-tax -o {output.outdir} &>> {log.log}
+        """
 
 #
 # rule gunzipAnn:

@@ -1,0 +1,21 @@
+projectName: MyProject
+
+# PGAP annotation: `nccrPipe pgap -c <this file>`
+#
+# Genomes come from a samplesheet, not from a directory scan wired directly
+# into this config (PGAP needs a per-genome taxon, which can't be inferred
+# from a filename). Generate it once from a directory of FASTAs, then hand-edit
+# the taxon column for any genome that needs a different value:
+#
+#   nccrPipe pgap-samples -i /path/to/genomes -o configs/pgap_samples.csv --taxon "Pseudomonas"
+#
+# Relative paths are resolved against the workflow/ directory, where snakemake
+# runs; use ../ to reference files in the repo root.
+
+outDir: ../output
+
+pgap_samples: ../configs/pgap_samples.csv
+
+pgap:
+  pgap_dir: /path/to/pgap_install
+  # cache: /path/to/pgap_install/cache   # optional, defaults to pgap_dir/cache
