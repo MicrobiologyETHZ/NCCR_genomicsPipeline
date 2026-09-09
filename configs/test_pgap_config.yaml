@@ -13,3 +13,7 @@ pgap_samples: ../tests/test_data/pgap_samples.csv
 
 pgap:
   pgap_dir: ../tests/test_data/pgap/placeholder_install
+  # Cluster resources (optional); mem_per_cpu is per core -> total = mem_per_cpu * threads.
+  # mem_per_cpu: 4000   # MB per core (default; 4000 * 8 = 32 GB)
+  # threads: 8
+  # time: 300           # minutes

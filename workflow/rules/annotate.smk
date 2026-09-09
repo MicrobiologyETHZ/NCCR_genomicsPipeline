@@ -30,6 +30,12 @@ else:
     PGAP_SAMPLES = {}
 
 _pgap_cfg = config.get('pgap', {})
+# Cluster resources, overridable from the config's `pgap:` block. mem is
+# per-core (passed to sbatch as --mem-per-cpu), so total = mem_per_cpu x threads;
+# the default 4000 x 8 = 32 GB.
+PGAP_MEM_PER_CPU = int(_pgap_cfg.get('mem_per_cpu', 4000))
+PGAP_TIME = int(_pgap_cfg.get('time', 300))          # minutes
+PGAP_THREADS = int(_pgap_cfg.get('threads', 8))
 PGAP_DIR = str(_resolve(_pgap_cfg['pgap_dir'])) if _pgap_cfg.get('pgap_dir') else ''
 PGAP_CACHE = (str(_resolve(_pgap_cfg['cache'])) if _pgap_cfg.get('cache')
               else f'{PGAP_DIR}/cache')
@@ -52,9 +58,9 @@ rule pgap:
 
     Four things that matter here, all learned the hard way:
       1. `unset SLURM_CPUS_PER_TASK NSLOTS` — otherwise PGAP passes --cpus to
-         Apptainer and hits a cgroup-v2 crash. threads: 8 above still reserves
-         8 cores via the SLURM submission (params.mem is per-cpu); this only
-         hides the count from PGAP itself.
+         Apptainer and hits a cgroup-v2 crash. The `threads:` directive above
+         still reserves those cores via the SLURM submission (params.mem is
+         per-cpu); this only hides the count from PGAP itself.
       2. No `conda:` directive — PGAP needs a clean host interpreter; every
          tool it runs lives inside its own container.
       3. `directory()` output, not a file path inside it — Snakemake
@@ -71,14 +77,14 @@ rule pgap:
         pgap = f'{PGAP_DIR}/pgap.py',
         cache = PGAP_CACHE,
         scratch = 20000,
-        mem = 32000,
-        time = 300,
+        mem = PGAP_MEM_PER_CPU,
+        time = PGAP_TIME,
         qerrfile = lambda wc: OUTDIR/f'logs/pgap/{wc.name}.qerr',
         qoutfile = lambda wc: OUTDIR/f'logs/pgap/{wc.name}.qout'
     log:
         log = OUTDIR/'logs/pgap/{name}.log'
     threads:
-        8
+        PGAP_THREADS
     shell:
         r"""
         rm -rf {output.outdir}

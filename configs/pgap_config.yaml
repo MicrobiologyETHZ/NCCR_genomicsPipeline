@@ -19,3 +19,12 @@ pgap_samples: ../configs/pgap_samples.csv
 pgap:
   pgap_dir: /path/to/pgap_install
   # cache: /path/to/pgap_install/cache   # optional, defaults to pgap_dir/cache
+
+  # Cluster resources (optional). mem_per_cpu is per core, so the SLURM job gets
+  # mem_per_cpu * threads in total; defaults below give 4000 * 8 = 32 GB.
+  # mem_per_cpu: 4000   # MB per core
+  # threads: 8
+  # time: 300           # minutes
+
+# Pin every PGAP job to one SLURM node (e.g. the only one with apptainer +
+# python3 on PATH): `nccrPipe pgap -c <this file> -p <partition> -w <node>`

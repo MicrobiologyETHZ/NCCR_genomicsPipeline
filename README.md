@@ -621,6 +621,12 @@ pgap_samples: /path/to/configs/pgap_samples.csv
 pgap:
   pgap_dir: /path/to/pgap_install
   # cache: /path/to/pgap_install/cache   # optional, defaults to pgap_dir/cache
+
+  # Cluster resources (optional). mem_per_cpu is per core, so a job gets
+  # mem_per_cpu * threads in total; defaults give 4000 * 8 = 32 GB.
+  # mem_per_cpu: 4000   # MB per core
+  # threads: 8
+  # time: 300           # minutes
 ```
 
 ### 4. Run the pipeline
@@ -631,6 +637,12 @@ nccrPipe pgap -c /path/to/pgap_config.yaml --dry
 
 # SLURM cluster
 nccrPipe pgap -c /path/to/pgap_config.yaml
+
+# Pin every job to one node (e.g. the only node with apptainer + python3 on
+# PATH). -w must name a node in the -p partition. Each PGAP job runs as a
+# single task (1 node, `threads` cores); concurrent jobs (-j) then queue on
+# that node as it frees up.
+nccrPipe pgap -c /path/to/pgap_config.yaml -p institute -w micro-hinton -j 2
 
 # Local machine
 nccrPipe pgap -c /path/to/pgap_config.yaml --local

@@ -92,6 +92,29 @@ def test_partition_is_configurable():
     assert "--partition gpu" in submit
 
 
+def _submit(**kwargs):
+    argv = build(**kwargs)
+    return argv[argv.index("--cluster-generic-submit-cmd") + 1]
+
+
+@pytest.mark.unit
+def test_nodelist_pins_a_single_node_when_given():
+    assert "--nodelist=" not in _submit()
+    assert "--nodelist=micro-hinton" in _submit(nodelist="micro-hinton")
+
+
+@pytest.mark.unit
+def test_single_node_switches_task_shape():
+    """PGAP is one multithreaded process: 1 task, N cores, 1 node."""
+    default = _submit()
+    assert "-n {threads}" in default
+    assert "--cpus-per-task" not in default
+
+    single = _submit(single_node=True)
+    assert "-N 1 --ntasks=1 --cpus-per-task={threads}" in single
+    assert "-n {threads}" not in single
+
+
 @pytest.mark.unit
 def test_latency_wait_passed_for_shared_filesystem():
     """Output lands on NFS, where a job can finish before its files appear."""
